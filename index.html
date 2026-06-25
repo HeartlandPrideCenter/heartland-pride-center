@@ -3,79 +3,136 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Heartland Pride Center | HPC HQ</title>
-  <meta name="description" content="Heartland Pride Center is a modern community resource hub for connection, wellness, and belonging across Florida’s Heartland." />
+  <title>Heartland Pride Center | Polk County LGBTQ+ Community Resource Hub</title>
+  <meta name="description" content="Heartland Pride Center is building a welcoming LGBTQ+ community resource hub serving Polk County and Florida's Heartland through outreach, wellness, prevention, connection, and affirming resources." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <main class="hero">
-    <div class="scene"></div>
-    <div class="shade"></div>
-    <div class="grain"></div>
+  <header class="site-header" id="top">
+    <a class="brand" href="#top" aria-label="Heartland Pride Center home">
+      <img src="logo.png" alt="Heartland Pride Center logo">
+      <span>
+        <strong>Heartland</strong>
+        <em>Pride Center</em>
+      </span>
+    </a>
 
-    <header class="nav">
-      <a class="brand" href="#">
-        <img src="logo.png" alt="Heartland Pride Center logo">
-        <span>
-          <strong>Heartland</strong>
-          <em>Pride Center</em>
-        </span>
-      </a>
+    <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
 
-      <nav class="nav-links">
-        <a href="#">Mission</a>
-        <a href="#">Programs</a>
-        <a href="#">Community</a>
-        <a href="#">Resources</a>
-        <a href="#">Partners</a>
-        <a href="#">Contact</a>
-      </nav>
+    <nav class="nav-links" aria-label="Primary navigation">
+      <a href="#mission">Mission</a>
+      <a href="#support">Support</a>
+      <a href="#resources">Resources</a>
+      <a href="#partners">Partners</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
 
-      <a class="nav-cta" href="#">Get Involved</a>
-    </header>
-
-    <section class="hero-content">
-      <p class="eyebrow">HPC HQ • FLORIDA’S HEARTLAND</p>
-
-      <h1>
-        A Modern Community Resource Hub for Connection, Wellness, and Belonging Across Florida’s Heartland.
-      </h1>
-
-      <p class="intro">
-        Heartland Pride Center is building a welcoming, partnership-driven community hub rooted in support, outreach, prevention, advocacy, and meaningful human connection across Central Florida.
-      </p>
-
-      <div class="actions">
-        <a class="btn primary" href="#">Explore Our Mission</a>
-        <a class="btn secondary" href="#">Partner With Us</a>
+  <main>
+    <section class="hero section-panel">
+      <div class="hero-copy">
+        <p class="eyebrow">HPC HQ • Polk County • Florida's Heartland</p>
+        <h1>Real people helping real people find connection, care, and belonging.</h1>
+        <p class="intro">Heartland Pride Center is building a central LGBTQ+ community resource hub for outreach, wellness, prevention education, affirming referrals, and human connection across Polk County and the surrounding Heartland region.</p>
+        <div class="actions">
+          <a class="btn primary" href="#support">Find Support</a>
+          <a class="btn secondary" href="#partners">Partner With Us</a>
+        </div>
       </div>
 
-      <div class="rainbow-line"></div>
+      <div class="hero-card" aria-label="Heartland Pride Center priorities">
+        <p>Our starting point</p>
+        <h2>Community. Compassion. Belonging.</h2>
+        <div class="rainbow-line"></div>
+        <ul>
+          <li>Resource navigation</li>
+          <li>HIV/STI prevention education</li>
+          <li>Affirming community referrals</li>
+          <li>Volunteer-powered outreach</li>
+        </ul>
+      </div>
     </section>
 
-    <section class="pillars">
+    <section class="mission" id="mission">
+      <div>
+        <p class="eyebrow">Why we exist</p>
+        <h2>A home base for people who have had to search too hard for support.</h2>
+      </div>
+      <p>HPC is being built to close the gap between need and access. Our work centers LGBTQ+ people, families, allies, and neighbors who need trustworthy information, affirming connection, and a place that treats dignity as the floor, not the ceiling.</p>
+    </section>
+
+    <section class="cards" id="support">
       <article>
         <span>01</span>
-        <h3>Connection</h3>
-        <p>Creating spaces where people feel seen, welcomed, and connected.</p>
+        <h3>Wellness & Prevention</h3>
+        <p>Education, outreach, safer-sex resources, testing referrals, PrEP navigation, and practical health information.</p>
       </article>
-
       <article>
         <span>02</span>
-        <h3>Wellness</h3>
-        <p>Expanding access to prevention, support, education, and care.</p>
+        <h3>Resource Navigation</h3>
+        <p>Helping people find affirming support for mental health, housing, legal help, food access, employment, and crisis needs.</p>
       </article>
-
       <article>
         <span>03</span>
-        <h3>Belonging</h3>
-        <p>Building visibility, dignity, and community across the Heartland.</p>
+        <h3>Community Connection</h3>
+        <p>Support groups, events, volunteer days, peer connection, and spaces where people can be seen without shrinking.</p>
       </article>
     </section>
+
+    <section class="hub" id="resources">
+      <div class="hub-copy">
+        <p class="eyebrow">The resource hub</p>
+        <h2>One place to start when you do not know where to start.</h2>
+        <p>We are developing a Polk County affirming resource directory for organizations, professionals, businesses, and community partners who are LGBTQ+ owned, ally-led, or affirming in practice.</p>
+      </div>
+      <div class="hub-list">
+        <div>
+          <strong>Coming next</strong>
+          <p>Verified affirming directory intake form</p>
+        </div>
+        <div>
+          <strong>In motion</strong>
+          <p>Partnership outreach and prevention training</p>
+        </div>
+        <div>
+          <strong>Needed now</strong>
+          <p>Volunteers, partners, supplies, and funding</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="partners" id="partners">
+      <p class="eyebrow">Build with us</p>
+      <h2>We are looking for partners, sponsors, mentors, and local allies.</h2>
+      <p>HPC is early-stage, but the need is already here. We welcome conversations with clinics, nonprofits, schools, faith communities, businesses, civic groups, and neighbors ready to help build a stronger, safer, more connected Heartland.</p>
+      <a class="btn primary" href="mailto:info@heartlandpridecenter.org">Start a Conversation</a>
+    </section>
+
+    <section class="contact" id="contact">
+      <div>
+        <p class="eyebrow">Contact</p>
+        <h2>Heartland Pride Center</h2>
+        <p>Serving Polk County and the surrounding Central Florida Heartland region.</p>
+      </div>
+      <div class="contact-box">
+        <a href="mailto:info@heartlandpridecenter.org">info@heartlandpridecenter.org</a>
+        <p>Website, directory, volunteer opportunities, and outreach programs are currently being developed.</p>
+      </div>
+    </section>
   </main>
+
+  <footer>
+    <p>© 2026 Heartland Pride Center, Inc.</p>
+    <a href="#top">Back to top</a>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
