@@ -36,11 +36,28 @@
       </div>
     </section>
 
+    <section class="intake-form" aria-label="Volunteer interest form">
+      <p class="eyebrow">Volunteer interest</p>
+      <h2>Tell us how you want to help.</h2>
+      <p class="form-note">Use this form if you are interested in outreach, events, committees, resource research, creative help, service projects, or future volunteer opportunities.</p>
+      <form name="volunteer-interest" method="POST" data-netlify="true">
+        <input type="hidden" name="form-name" value="volunteer-interest" />
+        <div class="form-grid">
+          <div class="form-field"><label for="name">Name</label><input id="name" name="name" type="text" required /></div>
+          <div class="form-field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
+          <div class="form-field"><label for="phone">Phone optional</label><input id="phone" name="phone" type="tel" /></div>
+          <div class="form-field"><label for="city">City</label><input id="city" name="city" type="text" placeholder="Where are you located?" /></div>
+          <div class="form-field full"><label for="interests">Areas of interest</label><textarea id="interests" name="interests" placeholder="Outreach, events, research, creative help, committees, Clean With Pride, peer connection, fundraising, or something else." required></textarea></div>
+          <div class="form-field full"><label for="experience">Skills, experience, or lived experience you want to share optional</label><textarea id="experience" name="experience"></textarea></div>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Send Volunteer Interest</button><p class="privacy-line">HPC will follow up as volunteer opportunities and needs are developed.</p></div>
+      </form>
+    </section>
+
     <section class="callout">
       <p class="eyebrow">No perfect resume required</p>
       <h2>There is a place for builders, helpers, organizers, listeners, and connectors.</h2>
       <p>HPC needs people who care enough to show up. Whether you have professional experience, lived experience, creative skills, administrative strength, or simply a steady heart, there is room to help grow this work.</p>
-      <div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Volunteer Interest</a><a class="btn secondary" href="contact.html">Contact HPC</a></div>
     </section>
   </main>
 
