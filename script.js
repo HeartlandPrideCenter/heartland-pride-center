@@ -154,6 +154,94 @@ brandPolish.textContent = `
     text-transform: uppercase;
   }
 
+  .section-heading,
+  .pathways,
+  .belonging-statement {
+    width: min(1180px, 88vw);
+    margin: 0 auto;
+  }
+
+  .pathways {
+    padding: 72px 0 40px;
+  }
+
+  .section-heading {
+    width: 100%;
+    max-width: 860px;
+    margin: 0 0 30px;
+  }
+
+  .section-heading h2,
+  .belonging-statement h2 {
+    font-family: "Cinzel", serif;
+    font-size: clamp(2.3rem, 4.4vw, 5rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    margin-bottom: 18px;
+  }
+
+  .section-heading p,
+  .belonging-statement p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .pathway-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  .pathway-card {
+    min-height: 260px;
+    padding: 30px;
+    border: 1px solid rgba(245, 241, 232, 0.14);
+    border-radius: 30px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.035));
+    box-shadow: 0 22px 70px rgba(0,0,0,0.18);
+    backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .pathway-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(239, 205, 114, 0.46);
+  }
+
+  .pathway-card span {
+    font-size: 2rem;
+  }
+
+  .pathway-card h3 {
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pathway-card p {
+    color: rgba(245, 241, 232, 0.74);
+    line-height: 1.65;
+    font-size: 0.96rem;
+  }
+
+  .find-here {
+    padding-top: 30px;
+  }
+
+  .belonging-statement {
+    margin-top: 18px;
+    margin-bottom: 24px;
+    padding: 54px;
+    border: 1px solid rgba(212, 175, 55, 0.24);
+    border-radius: 34px;
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.10), rgba(255,255,255,0.045));
+    box-shadow: var(--shadow);
+  }
+
   .site-footer {
     position: relative;
     z-index: 2;
@@ -233,6 +321,7 @@ brandPolish.textContent = `
   }
 
   @media (max-width: 980px) {
+    .pathway-grid,
     .footer-grid {
       grid-template-columns: 1fr 1fr;
     }
@@ -244,9 +333,28 @@ brandPolish.textContent = `
       height: 62px;
     }
 
+    .pathways,
+    .belonging-statement {
+      width: min(92vw, 1180px);
+    }
+
+    .pathways {
+      padding-top: 54px;
+    }
+
+    .pathway-grid,
     .footer-grid {
       grid-template-columns: 1fr;
       width: min(92vw, 1180px);
+    }
+
+    .pathway-card {
+      min-height: auto;
+      padding: 26px;
+    }
+
+    .belonging-statement {
+      padding: 30px;
     }
 
     .footer-bottom {
