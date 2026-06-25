@@ -1,6 +1,35 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const navLinks = document.querySelector('.nav-links');
 
+if (navLinks) {
+  const navItems = [
+    ['about.html', 'About'],
+    ['programs.html', 'Programs'],
+    ['resources.html', 'Resources'],
+    ['crisis.html', 'Crisis'],
+    ['partners.html', 'Partners'],
+    ['volunteer.html', 'Get Involved'],
+    ['support.html', 'Support HPC'],
+    ['contact.html', 'Contact']
+  ];
+
+  navItems.forEach(([href, label]) => {
+    const exists = Array.from(navLinks.querySelectorAll('a')).some((link) => link.getAttribute('href') === href);
+    if (!exists) {
+      const link = document.createElement('a');
+      link.href = href;
+      link.textContent = label;
+
+      const contactLink = navLinks.querySelector('a[href="contact.html"]');
+      if (href === 'support.html' && contactLink) {
+        navLinks.insertBefore(link, contactLink);
+      } else {
+        navLinks.appendChild(link);
+      }
+    }
+  });
+}
+
 if (menuToggle && navLinks) {
   menuToggle.addEventListener('click', () => {
     const isOpen = navLinks.classList.toggle('is-open');
@@ -46,6 +75,14 @@ brandPolish.textContent = `
     overflow: visible;
   }
 
+  .nav-links {
+    gap: clamp(12px, 1.7vw, 24px);
+  }
+
+  .nav-links a {
+    white-space: nowrap;
+  }
+
   .rainbow-signature-strip {
     width: min(1180px, 88vw);
     height: 5px;
@@ -53,6 +90,16 @@ brandPolish.textContent = `
     border-radius: 999px;
     background: linear-gradient(90deg,#e63946,#f4a261,#e9c46a,#2ecc71,#3a86ff,#9b5de5);
     box-shadow: 0 0 28px rgba(212, 175, 55, 0.2);
+  }
+
+  .subtle-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--gold-light);
+    font-weight: 950;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   @media (max-width: 640px) {
