@@ -1,5 +1,6 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const navLinks = document.querySelector('.nav-links');
+const givebutterUrl = 'https://givebutter.com/building-heartland-pride-center-aavkix';
 
 if (navLinks) {
   const navItems = [
@@ -44,6 +45,56 @@ if (menuToggle && navLinks) {
   });
 }
 
+const footer = document.querySelector('footer');
+if (footer) {
+  footer.className = 'site-footer';
+  footer.innerHTML = `
+    <div class="footer-rainbow" aria-hidden="true"></div>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h2>Heartland Pride Center</h2>
+        <p class="footer-tagline">Real people helping real people.</p>
+        <p>Building an affirming LGBTQ+ community resource hub for Polk County and Florida's Heartland.</p>
+      </div>
+      <div>
+        <h3>Explore</h3>
+        <a href="about.html">About</a>
+        <a href="programs.html">Programs & Services</a>
+        <a href="resources.html">Resource Directory</a>
+        <a href="crisis.html">Crisis & Immediate Support</a>
+        <a href="support.html">Support HPC</a>
+      </div>
+      <div>
+        <h3>Get Involved</h3>
+        <a href="volunteer.html">Volunteer</a>
+        <a href="partners.html">Partner With Us</a>
+        <a href="resources.html">Join the Resource Network</a>
+        <a href="contact.html">Contact HPC</a>
+        <a href="${givebutterUrl}" target="_blank" rel="noopener">Givebutter</a>
+      </div>
+      <div>
+        <h3>Connect</h3>
+        <a href="mailto:info@heartlandpridecenter.org">info@heartlandpridecenter.org</a>
+        <a href="https://www.facebook.com/people/Heartland-Pride-Center/61577565114125/" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.instagram.com/heartlandpridecenter/" target="_blank" rel="noopener">Instagram</a>
+        <a href="crisis.html">Need immediate support?</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Heartland Pride Center, Inc. A Florida nonprofit organization.</p>
+      <p>Serving Polk County and the Central Florida Heartland.</p>
+    </div>
+  `;
+}
+
+const givebutterButtons = document.querySelectorAll('a[href="#givebutter-link-needed"]');
+givebutterButtons.forEach((button) => {
+  button.href = givebutterUrl;
+  button.target = '_blank';
+  button.rel = 'noopener';
+  button.textContent = 'Support Through Givebutter';
+});
+
 const brandPolish = document.createElement('style');
 brandPolish.textContent = `
   .site-header {
@@ -83,7 +134,8 @@ brandPolish.textContent = `
     white-space: nowrap;
   }
 
-  .rainbow-signature-strip {
+  .rainbow-signature-strip,
+  .footer-rainbow {
     width: min(1180px, 88vw);
     height: 5px;
     margin: 0 auto;
@@ -102,10 +154,103 @@ brandPolish.textContent = `
     text-transform: uppercase;
   }
 
+  .site-footer {
+    position: relative;
+    z-index: 2;
+    display: block;
+    padding: 0 6vw 34px;
+    border-top: 1px solid rgba(245, 241, 232, 0.12);
+    background: rgba(6, 19, 35, 0.42);
+  }
+
+  .site-footer .footer-rainbow {
+    width: 100%;
+    margin: 0 0 34px;
+    border-radius: 0 0 999px 999px;
+  }
+
+  .footer-grid {
+    width: min(1180px, 88vw);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.35fr 0.8fr 0.8fr 0.9fr;
+    gap: 34px;
+  }
+
+  .footer-brand h2 {
+    font-family: "Cinzel", serif;
+    font-size: clamp(1.6rem, 2.4vw, 2.8rem);
+    line-height: 1.04;
+    margin-bottom: 14px;
+  }
+
+  .footer-tagline {
+    color: var(--gold-light) !important;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .site-footer h3 {
+    color: var(--gold-light);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .site-footer p,
+  .site-footer a {
+    color: rgba(245, 241, 232, 0.72);
+    font-size: 0.96rem;
+    line-height: 1.7;
+  }
+
+  .site-footer a {
+    display: block;
+    margin-bottom: 10px;
+    transition: color 0.2s ease;
+  }
+
+  .site-footer a:hover {
+    color: var(--gold-light);
+  }
+
+  .footer-bottom {
+    width: min(1180px, 88vw);
+    margin: 32px auto 0;
+    padding-top: 22px;
+    border-top: 1px solid rgba(245, 241, 232, 0.12);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .footer-bottom p {
+    font-size: 0.84rem;
+    color: rgba(245, 241, 232, 0.58);
+  }
+
+  @media (max-width: 980px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
   @media (max-width: 640px) {
     .brand img {
       width: 62px;
       height: 62px;
+    }
+
+    .footer-grid {
+      grid-template-columns: 1fr;
+      width: min(92vw, 1180px);
+    }
+
+    .footer-bottom {
+      width: min(92vw, 1180px);
     }
   }
 `;
