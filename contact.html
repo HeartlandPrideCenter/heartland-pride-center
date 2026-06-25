@@ -31,9 +31,52 @@
         <h2>info@heartlandpridecenter.org</h2>
       </div>
       <div>
-        <p>Heartland Pride Center is currently developing its website, directory, volunteer structure, and outreach programs. Email is the best way to start a conversation while the organization is still being built.</p>
+        <p>Email is still the best direct way to reach Heartland Pride Center while programs, directory tools, and outreach systems continue to grow.</p>
         <div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div>
       </div>
+    </section>
+
+    <section class="intake-form" aria-label="Contact form">
+      <p class="eyebrow">Contact form</p>
+      <h2>Tell us what you need or how you want to connect.</h2>
+      <p class="form-note">This form is for general contact, support questions, partnership ideas, volunteer interest, and resource directory inquiries.</p>
+
+      <form name="hpc-contact" method="POST" data-netlify="true">
+        <input type="hidden" name="form-name" value="hpc-contact" />
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" required />
+          </div>
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="form-field">
+            <label for="phone">Phone optional</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" />
+          </div>
+          <div class="form-field">
+            <label for="reason">Reason</label>
+            <select id="reason" name="reason" required>
+              <option value="">Choose one</option>
+              <option>Support or resource help</option>
+              <option>Partnership</option>
+              <option>Volunteer interest</option>
+              <option>Directory listing</option>
+              <option>General question</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Share what you are looking for, how HPC can follow up, and anything important for us to know." required></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Send Message</button>
+          <p class="privacy-line">Please avoid sharing highly sensitive details through this general web form.</p>
+        </div>
+      </form>
     </section>
 
     <section class="page-section">
