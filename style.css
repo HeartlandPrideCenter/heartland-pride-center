@@ -19,6 +19,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 118px;
 }
 
 body {
@@ -152,6 +153,14 @@ main {
 .contact {
   width: min(1180px, 88vw);
   margin: 0 auto;
+}
+
+#mission,
+#support,
+#resources,
+#partners,
+#contact {
+  scroll-margin-top: 118px;
 }
 
 .hero {
@@ -489,6 +498,18 @@ footer a {
 }
 
 @media (max-width: 640px) {
+  html {
+    scroll-padding-top: 96px;
+  }
+
+  #mission,
+  #support,
+  #resources,
+  #partners,
+  #contact {
+    scroll-margin-top: 96px;
+  }
+
   .site-header {
     min-height: 78px;
     padding: 12px 5vw;
