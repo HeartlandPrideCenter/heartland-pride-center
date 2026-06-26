@@ -53,5 +53,85 @@ brandPolish.textContent = `
 `;
 document.head.appendChild(brandPolish);
 
+const launchPolish = document.createElement('style');
+launchPolish.textContent = `
+  h1,
+  .page-hero h1,
+  .hero h1 {
+    font-family: "Inter", sans-serif !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.075em !important;
+    text-transform: none !important;
+  }
+
+  .section-heading h2,
+  .belonging-statement h2,
+  .photo-band h2,
+  .community-photo-block h2,
+  .partners h2,
+  .hub h2,
+  .callout h2,
+  .intake-form h2,
+  .footer-brand h2 {
+    font-family: "Inter", sans-serif !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.06em !important;
+    text-transform: none !important;
+  }
+
+  .hero h1 {
+    max-width: 980px;
+  }
+
+  .btn,
+  .pathway-card,
+  .cards article,
+  .page-card,
+  .hub-list div,
+  .contact-box,
+  .photo-band,
+  .community-photo-block,
+  .hero-photo-card,
+  .volunteer-visual-hero img {
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
+  }
+
+  .btn:hover,
+  .pathway-card:hover,
+  .cards article:hover,
+  .page-card:hover,
+  .hub-list div:hover {
+    transform: translateY(-3px);
+    border-color: rgba(239,205,114,.48) !important;
+    box-shadow: 0 28px 88px rgba(0,0,0,.28);
+  }
+
+  .pathway-card::after {
+    content: "Get started →";
+    margin-top: auto;
+    color: var(--gold-light);
+    font-size: .78rem;
+    font-weight: 950;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 3px solid rgba(239,205,114,.85);
+    outline-offset: 4px;
+    border-radius: 14px;
+  }
+
+  @media(max-width:640px){
+    .hero h1 { font-size: clamp(2.25rem, 9.4vw, 2.85rem) !important; letter-spacing: -.07em !important; }
+    .section-heading h2,
+    .belonging-statement h2,
+    .photo-band h2,
+    .community-photo-block h2 { font-size: clamp(1.85rem, 8vw, 2.55rem) !important; letter-spacing: -.055em !important; }
+  }
+`;
+document.head.appendChild(launchPolish);
+
 const hero = document.querySelector('.hero');
 if (hero && !document.querySelector('.rainbow-signature-strip')) { const strip = document.createElement('div'); strip.className = 'rainbow-signature-strip'; strip.setAttribute('aria-hidden', 'true'); hero.insertAdjacentElement('afterend', strip); }
