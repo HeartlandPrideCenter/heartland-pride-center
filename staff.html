@@ -3,111 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Staff Portal | Heartland Pride Center Headquarters</title>
-  <meta name="description" content="Heartland Pride Center staff portal prototype for internal operations, Community Radar, partnerships, volunteers, grants, outreach, and institutional memory." />
+  <title>Staff Login | Heartland Pride Center Operations Center</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Authorized staff and volunteer login for the Heartland Pride Center Operations Center." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
-    body.staff-portal { min-height: 100vh; font-family: "Inter", sans-serif; background: radial-gradient(circle at top left, rgba(212,175,55,.2), transparent 28rem), radial-gradient(circle at bottom right, rgba(58,134,255,.18), transparent 30rem), linear-gradient(135deg,#061323,#071827 48%,#102d4c); color: var(--ivory); }
-    .portal-shell { width: min(1180px, 90vw); margin: 0 auto; padding: clamp(34px, 6vw, 72px) 0; }
-    .portal-card, .mission-card, .quick-action, .department-card, .tool-panel { border: 1px solid rgba(245,241,232,.14); background: linear-gradient(145deg, rgba(255,255,255,.095), rgba(255,255,255,.035)); box-shadow: 0 26px 80px rgba(0,0,0,.28); backdrop-filter: blur(22px); border-radius: 28px; padding: 26px; }
-    .portal-back { display: inline-flex; margin-bottom: 26px; color: var(--gold-light); font-weight: 850; letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; }
-    .dashboard-top { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); gap: 24px; align-items: stretch; margin-bottom: 24px; }
-    .portal-lockup { display: flex; align-items: center; gap: 18px; margin-bottom: 30px; }
-    .portal-lockup img { width: 72px; height: 72px; object-fit: contain; }
-    .portal-lockup strong, .mission-card strong, .department-card strong, .quick-action strong { display: block; margin-bottom: 8px; color: var(--gold-light); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; }
-    .portal-card h1 { font-family: "Inter", sans-serif; font-size: clamp(2.5rem, 6vw, 5.7rem); font-weight: 800; letter-spacing: -.052em; line-height: 1.04; margin-bottom: 18px; }
-    .portal-card p, .mission-card p, .department-card p, .quick-action p, .tool-panel p { color: rgba(245,241,232,.74); line-height: 1.75; }
-    .brief-list, .tool-list { display: grid; gap: 12px; margin-top: 18px; list-style: none; }
-    .brief-list li, .tool-list li { padding: 14px 16px; border-radius: 18px; background: rgba(6,19,35,.48); color: rgba(245,241,232,.82); line-height: 1.5; }
-    .mission-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
-    .mission-card span { display: block; font-size: 2rem; margin-bottom: 12px; }
-    .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
-    .department-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .portal-notice { margin-top: 18px; padding: 16px 18px; border-radius: 20px; border: 1px solid rgba(212,175,55,.24); background: rgba(212,175,55,.08); font-size: .92rem; }
-    .portal-nav { position: sticky; top: 0; z-index: 20; display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 24px; padding: 14px; border: 1px solid rgba(245,241,232,.12); border-radius: 22px; background: rgba(6,19,35,.82); backdrop-filter: blur(18px); }
-    .portal-nav a, .mini-button { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border: 1px solid rgba(245,241,232,.14); border-radius: 999px; background: rgba(255,255,255,.055); color: rgba(245,241,232,.82); font-size: .72rem; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; }
-    .portal-nav a:hover, .mini-button:hover, .mission-card:hover, .department-card:hover, .quick-action:hover { transform: translateY(-3px); border-color: rgba(239,205,114,.45); box-shadow: 0 24px 76px rgba(0,0,0,.26),0 0 42px rgba(212,175,55,.10); }
-    .mission-card, .department-card, .quick-action { display: block; color: inherit; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
-    .mission-card::after, .department-card::after, .quick-action::after { content: "Open tool →"; display: block; margin-top: 16px; color: var(--gold-light); font-size: .72rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
-    .tool-panel { display: none; margin-top: 24px; scroll-margin-top: 120px; }
-    .tool-panel.is-active { display: block; }
-    .tool-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
-    .tool-header h2 { font-family: "Inter", sans-serif; font-size: clamp(1.9rem, 3vw, 3.2rem); line-height: 1.1; letter-spacing: -.035em; }
-    .field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
-    .field-card { padding: 16px; border-radius: 18px; background: rgba(6,19,35,.42); border: 1px solid rgba(212,175,55,.16); }
-    .field-card small { display: block; color: var(--gold-light); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
-    @media (max-width: 960px) { .dashboard-top, .mission-grid, .quick-actions, .department-grid, .field-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px) { .dashboard-top, .mission-grid, .quick-actions, .department-grid, .field-grid { grid-template-columns: 1fr; } .portal-lockup { align-items: flex-start; } }
+    body.staff-page{min-height:100vh;background:radial-gradient(circle at 80% 10%,rgba(239,205,114,.22),transparent 26rem),radial-gradient(circle at 12% 90%,rgba(58,134,255,.14),transparent 30rem),linear-gradient(135deg,#061323,#071827 44%,#102d4c);color:var(--ivory)}
+    .staff-shell{width:min(1120px,92vw);margin:0 auto;padding:clamp(42px,7vw,86px) 0 72px}.staff-header{display:flex;align-items:center;justify-content:space-between;gap:22px;margin-bottom:34px}.staff-brand{display:flex;align-items:center;gap:16px}.staff-brand img{width:72px;height:72px;object-fit:contain}.staff-brand strong{display:block;text-transform:uppercase;letter-spacing:.12em;font-weight:950;color:var(--ivory)}.staff-brand span{display:block;margin-top:6px;color:var(--gold-light);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.72rem}.staff-back{color:rgba(245,241,232,.72);font-size:.76rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.staff-lock{display:grid;grid-template-columns:.92fr 1.08fr;gap:28px;align-items:stretch}.login-panel,.ops-panel{border:1px solid rgba(245,241,232,.14);border-radius:34px;background:linear-gradient(145deg,rgba(255,255,255,.095),rgba(255,255,255,.035));box-shadow:var(--shadow);backdrop-filter:blur(20px);overflow:hidden}.login-panel{padding:42px}.ops-panel{padding:34px;display:none}.staff-eyebrow{color:var(--gold-light);text-transform:uppercase;letter-spacing:.22em;font-size:.74rem;font-weight:950;margin-bottom:18px}.staff-lock h1,.ops-panel h1{font-family:"Inter",sans-serif;font-size:clamp(2.4rem,5vw,5.2rem);line-height:1.05;letter-spacing:-.045em;margin-bottom:20px}.staff-lock p,.ops-panel p{color:var(--muted);line-height:1.75;font-size:1rem}.staff-divider{position:relative;width:100%;height:5px;margin:28px 0;border-radius:999px;background:linear-gradient(90deg,#e63946,#f4a261,#e9c46a,#2ecc71,#3a86ff,#9b5de5);box-shadow:0 0 28px rgba(212,175,55,.2)}.staff-divider::after{content:"♥";position:absolute;left:50%;top:50%;transform:translate(-50%,-48%);display:grid;place-items:center;width:34px;height:34px;border-radius:999px;color:#081523;background:linear-gradient(135deg,var(--gold),var(--gold-light));font-size:18px;font-weight:900;box-shadow:0 0 28px rgba(239,205,114,.35)}.login-form{display:grid;gap:16px;margin-top:28px}.login-form label{display:grid;gap:8px;color:rgba(245,241,232,.82);font-size:.78rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.login-form input{width:100%;min-height:52px;border:1px solid rgba(245,241,232,.18);border-radius:18px;background:rgba(6,19,35,.55);color:var(--ivory);padding:0 16px;font:inherit;outline:none}.login-form input:focus{border-color:rgba(239,205,114,.72);box-shadow:0 0 0 4px rgba(239,205,114,.12)}.staff-note{margin-top:18px;color:rgba(245,241,232,.58)!important;font-size:.86rem!important}.login-error{display:none;margin-top:14px;color:#ffd7d7!important;font-weight:800}.ops-status{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:26px 0}.status-card,.ops-card{border:1px solid rgba(245,241,232,.12);border-radius:22px;background:rgba(6,19,35,.42);padding:18px}.status-card strong{display:block;color:var(--gold-light);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}.status-card span{color:rgba(245,241,232,.82);font-weight:800}.ops-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}.ops-card{min-height:122px;display:flex;flex-direction:column;gap:10px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.ops-card:hover{transform:translateY(-3px);border-color:rgba(239,205,114,.42);box-shadow:0 24px 76px rgba(0,0,0,.26),0 0 42px rgba(212,175,55,.10)}.ops-card span{font-size:1.65rem}.ops-card strong{color:var(--ivory);font-size:.88rem;letter-spacing:.08em;text-transform:uppercase}.ops-card em{font-style:normal;color:rgba(245,241,232,.62);font-size:.86rem;line-height:1.45}.logout-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:24px}.mini-btn{border:1px solid rgba(245,241,232,.18);background:rgba(255,255,255,.04);color:var(--ivory);border-radius:999px;padding:12px 18px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}.staff-page.is-logged-in .login-panel{display:none}.staff-page.is-logged-in .ops-panel{display:block;grid-column:1/-1}@media(max-width:860px){.staff-header,.staff-lock{display:block}.staff-back{display:inline-block;margin-top:18px}.ops-status,.ops-grid{grid-template-columns:1fr}.login-panel{padding:30px;margin-bottom:22px}.staff-brand img{width:62px;height:62px}}
   </style>
 </head>
-<body class="staff-portal">
-  <main class="portal-shell">
-    <a class="portal-back" href="index.html">Return to public site</a>
-    <section class="portal-card" aria-label="Heartland Pride Center Headquarters dashboard">
-      <div class="portal-lockup"><img src="logo.png" alt="Heartland Pride Center logo"><div><strong>Staff Portal Prototype</strong><p>Heartland Pride Center Headquarters</p></div></div>
-      <h1>Welcome back. The community is waiting.</h1>
-      <p>This prototype is now interactive: cards open tools, quick actions surface workflows, and the operator can move around Headquarters without hunting.</p>
-      <p class="portal-notice">Prototype mode: preview only. No private client, volunteer, donor, or partner-sensitive information should be stored here until secure authentication and protected data storage are added.</p>
+<body class="staff-page">
+  <main class="staff-shell">
+    <header class="staff-header">
+      <a class="staff-brand" href="index.html" aria-label="Heartland Pride Center home"><img src="logo.png" alt="Heartland Pride Center logo"><div><strong>Heartland Pride Center</strong><span>Operations Center</span></div></a>
+      <a class="staff-back" href="index.html">← Return to Public Site</a>
+    </header>
+
+    <section class="staff-lock" aria-live="polite">
+      <div class="login-panel">
+        <p class="staff-eyebrow">Authorized Access Only</p><h1>Operations Center</h1>
+        <p>Staff and volunteer access for Heartland Pride Center's backstage tools, internal resources, outreach systems, and organizational workspace.</p>
+        <div class="staff-divider" aria-hidden="true"></div>
+        <form class="login-form" id="staffLogin">
+          <label>Username<input type="text" id="staffUser" autocomplete="username" required></label>
+          <label>Password<input type="password" id="staffPass" autocomplete="current-password" required></label>
+          <button class="btn primary" type="submit">Sign In</button>
+          <p class="login-error" id="loginError">Access not recognized. Please check your login.</p>
+        </form>
+        <p class="staff-note">This Phase 1 login gate prevents casual browsing. It is not a replacement for future secure staff accounts, role permissions, and protected data storage.</p>
+      </div>
+      <div class="login-panel">
+        <p class="staff-eyebrow">Backstage Systems</p><h1>Front stage stays simple.</h1>
+        <p>Visitors experience a welcoming community hub. Behind the curtain, the Operations Center keeps partnerships, volunteers, resources, events, grants, and outreach organized.</p>
+        <div class="staff-divider" aria-hidden="true"></div>
+        <p class="staff-note">Do not store private client, donor, volunteer, partner-sensitive, medical, legal, or crisis information here until secure authentication and protected storage are added.</p>
+      </div>
+      <section class="ops-panel" id="opsPanel">
+        <p class="staff-eyebrow">Welcome Back</p><h1>Good afternoon, Gabriel.</h1>
+        <p>Welcome to HQ. The public sees the front stage. This is where the backstage work gets organized.</p>
+        <div class="staff-divider" aria-hidden="true"></div>
+        <div class="ops-status"><div class="status-card"><strong>Website</strong><span>Online</span></div><div class="status-card"><strong>Analytics</strong><span>Connected</span></div><div class="status-card"><strong>Domain</strong><span>Active</span></div></div>
+        <div class="ops-grid">
+          <a class="ops-card" href="#"><span>❤️</span><strong>Community Dashboard</strong><em>Pulse, updates, priorities, and quick actions.</em></a>
+          <a class="ops-card" href="#"><span>🤝</span><strong>Partnerships</strong><em>Contacts, follow-ups, sponsors, and outreach history.</em></a>
+          <a class="ops-card" href="#"><span>🏢</span><strong>Affirming Network</strong><em>Business listings, verification, categories, and cities.</em></a>
+          <a class="ops-card" href="#"><span>📅</span><strong>Events</strong><em>Planning, calendars, checklists, and registrations.</em></a>
+          <a class="ops-card" href="#"><span>🙋</span><strong>Volunteers</strong><em>Applications, onboarding, training, and scheduling.</em></a>
+          <a class="ops-card" href="#"><span>💰</span><strong>Grants & Funding</strong><em>Deadlines, proposals, reports, and campaigns.</em></a>
+          <a class="ops-card" href="#"><span>📦</span><strong>Inventory</strong><em>Outreach supplies, table kits, print materials, and gear.</em></a>
+          <a class="ops-card" href="#"><span>📰</span><strong>Media Library</strong><em>Photos, graphics, flyers, press, and brand assets.</em></a>
+          <a class="ops-card" href="#"><span>📚</span><strong>Documents</strong><em>Policies, forms, board files, templates, and guides.</em></a>
+        </div>
+        <div class="logout-row"><p class="staff-note">Modules are staged for future buildout. Phase 1 confirms the Operations Center experience and structure.</p><button class="mini-btn" id="logoutBtn" type="button">Sign Out</button></div>
+      </section>
     </section>
-
-    <nav class="portal-nav" aria-label="Staff portal sections">
-      <a href="#radar">Radar</a><a href="#partnerships">Partnerships</a><a href="#network">Network</a><a href="#outreach">Outreach</a><a href="#calendar">Calendar</a><a href="#volunteers">Volunteers</a><a href="#grants">Grants</a><a href="#knowledge">Knowledge</a>
-    </nav>
-
-    <div class="dashboard-top">
-      <button class="portal-card mini-button" data-open="briefing" style="display:block;text-align:left;border-radius:28px;padding:26px"><p class="eyebrow">Today’s Mission</p><h2>Mission Status</h2><p>Open today’s priorities, deadlines, and follow-ups.</p></button>
-      <div class="portal-card"><p class="eyebrow">Briefing</p><ul class="brief-list"><li><strong>Community Radar:</strong> build the 2026 event pipeline and 2027 Pride calendar.</li><li><strong>Partnerships:</strong> track BayCare, We Care Central Florida, Polk Pride, and local health partners.</li><li><strong>Operations:</strong> add secure login, mission calendar, and internal trackers.</li></ul></div>
-    </div>
-
-    <div class="mission-grid">
-      <a class="mission-card" href="#radar"><span>📡</span><strong>Community Radar</strong><p>Events, vendor deadlines, Pride planning, health fairs, festivals, and community intelligence.</p></a>
-      <a class="mission-card" href="#partnerships"><span>🤝</span><strong>Partnerships</strong><p>Organizations, contacts, follow-ups, meeting notes, and relationship status.</p></a>
-      <a class="mission-card" href="#network"><span>❤️</span><strong>Affirming Network</strong><p>Business applications, verification, heart ratings, certificates, and map management.</p></a>
-      <a class="mission-card" href="#outreach"><span>📦</span><strong>Outreach</strong><p>Inventory, packing lists, booth kits, QR codes, and event readiness.</p></a>
-    </div>
-
-    <div class="quick-actions">
-      <button class="quick-action" data-open="briefing"><strong>Start My Day</strong><p>Generate a focused morning briefing from events, emails, calendar items, and deadlines.</p></button>
-      <button class="quick-action" data-open="add-opportunity"><strong>Add Opportunity</strong><p>Capture an event, grant, partner, volunteer inquiry, or business lead before it gets lost.</p></button>
-      <button class="quick-action" data-open="legacy"><strong>End My Day</strong><p>Record wins, lessons learned, follow-ups, and notes for the Legacy Journal.</p></button>
-    </div>
-
-    <div class="department-grid">
-      <a class="department-card" href="#calendar"><strong>Mission Calendar</strong><p>The official schedule for outreach, trainings, grant deadlines, meetings, and community events.</p></a>
-      <a class="department-card" href="#volunteers"><strong>Volunteer Center</strong><p>Applications, training, availability, event assignments, hours, and recognition.</p></a>
-      <a class="department-card" href="#grants"><strong>Grant Center</strong><p>Funding opportunities, deadlines, applications, required documents, reports, and award history.</p></a>
-      <a class="department-card" href="#media"><strong>Media Center</strong><p>Approved logos, photos, flyers, Canva exports, social graphics, and event albums.</p></a>
-      <a class="department-card" href="#knowledge"><strong>Knowledge Base</strong><p>Policies, SOPs, board documents, templates, training material, and internal guides.</p></a>
-      <a class="department-card" href="#legacy"><strong>Legacy Journal</strong><p>Event notes, lessons learned, organizer details, supply counts, and institutional memory.</p></a>
-    </div>
-
-    <section class="tool-panel is-active" id="briefing"><div class="tool-header"><div><p class="eyebrow">Start My Day</p><h2>Operator briefing</h2></div><button class="mini-button" data-open="add-opportunity">Add item</button></div><ul class="tool-list"><li>Review upcoming deadlines and registration windows.</li><li>Check event pipeline for anything due in the next 30 days.</li><li>Surface partnership follow-ups before they go cold.</li></ul></section>
-    <section class="tool-panel" id="add-opportunity"><div class="tool-header"><div><p class="eyebrow">Quick Capture</p><h2>Add Opportunity</h2></div><button class="mini-button" data-open="radar">Send to Radar</button></div><div class="field-grid"><div class="field-card"><small>Type</small>Event, grant, partner, volunteer, business</div><div class="field-card"><small>Deadline</small>Registration, response, application, follow-up</div><div class="field-card"><small>Next Action</small>Call, email, apply, watch, schedule</div></div></section>
-    <section class="tool-panel" id="radar"><div class="tool-header"><div><p class="eyebrow">Community Radar</p><h2>Event intelligence</h2></div><button class="mini-button" data-open="add-opportunity">New event</button></div><ul class="tool-list"><li>Track Pride events, health fairs, festivals, chambers, libraries, colleges, and city calendars.</li><li>Store booth cost, organizer, deadline, attendance notes, and return value.</li><li>Flag events that need action this week.</li></ul></section>
-    <section class="tool-panel" id="partnerships"><div class="tool-header"><div><p class="eyebrow">Partnership Center</p><h2>Relationship tracker</h2></div><button class="mini-button" data-open="add-opportunity">Add partner</button></div><ul class="tool-list"><li>Track last contact, next follow-up, status, and partnership ideas.</li><li>Keep every relationship from living only in email threads.</li></ul></section>
-    <section class="tool-panel" id="network"><div class="tool-header"><div><p class="eyebrow">Affirming Business Network</p><h2>Business operations</h2></div><button class="mini-button">Review applications</button></div><ul class="tool-list"><li>Manage applications, verification, heart ratings, certificates, renewals, and map visibility.</li></ul></section>
-    <section class="tool-panel" id="outreach"><div class="tool-header"><div><p class="eyebrow">Outreach</p><h2>Field readiness</h2></div><button class="mini-button">Build packing list</button></div><ul class="tool-list"><li>Prepare booth kits, QR codes, brochures, condoms, table setup, signage, and volunteer assignments.</li></ul></section>
-    <section class="tool-panel" id="calendar"><div class="tool-header"><div><p class="eyebrow">Mission Calendar</p><h2>Schedule command</h2></div><button class="mini-button">Add deadline</button></div><ul class="tool-list"><li>Keep outreach events, grant deadlines, trainings, and follow-ups on one mission calendar.</li></ul></section>
-    <section class="tool-panel" id="volunteers"><div class="tool-header"><div><p class="eyebrow">Volunteer Center</p><h2>People power</h2></div><button class="mini-button">Add volunteer</button></div><ul class="tool-list"><li>Track applications, availability, training, event assignments, hours, and recognition.</li></ul></section>
-    <section class="tool-panel" id="grants"><div class="tool-header"><div><p class="eyebrow">Grant Center</p><h2>Funding pipeline</h2></div><button class="mini-button">Add grant</button></div><ul class="tool-list"><li>Track grant openings, deadlines, requirements, documents, reports, and awards.</li></ul></section>
-    <section class="tool-panel" id="media"><div class="tool-header"><div><p class="eyebrow">Media Center</p><h2>Approved assets</h2></div><button class="mini-button">Upload asset</button></div><ul class="tool-list"><li>Keep logos, flyers, photos, graphics, and event albums organized and approved.</li></ul></section>
-    <section class="tool-panel" id="knowledge"><div class="tool-header"><div><p class="eyebrow">Knowledge Base</p><h2>How HPC works</h2></div><button class="mini-button">Add SOP</button></div><ul class="tool-list"><li>Policies, procedures, board documents, templates, trainings, and onboarding live here.</li></ul></section>
-    <section class="tool-panel" id="legacy"><div class="tool-header"><div><p class="eyebrow">Legacy Journal</p><h2>Today becomes tomorrow’s wisdom</h2></div><button class="mini-button">Record note</button></div><ul class="tool-list"><li>Capture what worked, what failed, who helped, what ran out, and what to do next time.</li></ul></section>
   </main>
-
   <script>
-    const panels = [...document.querySelectorAll('.tool-panel')];
-    function openPanel(id) {
-      const panel = document.getElementById(id);
-      if (!panel) return;
-      panels.forEach((item) => item.classList.toggle('is-active', item.id === id));
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => openPanel(button.dataset.open)));
-    document.querySelectorAll('a[href^="#"]').forEach((link) => link.addEventListener('click', (event) => { const id = link.getAttribute('href').slice(1); if (document.getElementById(id)?.classList.contains('tool-panel')) { event.preventDefault(); openPanel(id); } }));
+    const loginForm=document.getElementById('staffLogin');const logoutBtn=document.getElementById('logoutBtn');const loginError=document.getElementById('loginError');
+    const validUsers=[{user:'gabriel',pass:'hpc-hq'},{user:'atlas',pass:'backstage'}];
+    function unlockPortal(){document.body.classList.add('is-logged-in');sessionStorage.setItem('hpcStaffSession','active')}
+    if(sessionStorage.getItem('hpcStaffSession')==='active')unlockPortal();
+    loginForm?.addEventListener('submit',(event)=>{event.preventDefault();const user=document.getElementById('staffUser').value.trim().toLowerCase();const pass=document.getElementById('staffPass').value;const match=validUsers.some((item)=>item.user===user&&item.pass===pass);if(match){loginError.style.display='none';unlockPortal()}else{loginError.style.display='block'}});
+    logoutBtn?.addEventListener('click',()=>{sessionStorage.removeItem('hpcStaffSession');document.body.classList.remove('is-logged-in')});
   </script>
 </body>
 </html>
