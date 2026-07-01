@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Portal | Heartland Pride Center Headquarters</title>
+  <meta name="description" content="Heartland Pride Center staff portal prototype for internal operations, Community Radar, partnerships, volunteers, grants, outreach, and institutional memory." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body.staff-portal { min-height: 100vh; font-family: "Inter", sans-serif; background: radial-gradient(circle at top left, rgba(212,175,55,.2), transparent 28rem), radial-gradient(circle at bottom right, rgba(58,134,255,.18), transparent 30rem), linear-gradient(135deg,#061323,#071827 48%,#102d4c); color: var(--ivory); }
+    .portal-shell { width: min(1180px, 90vw); margin: 0 auto; padding: clamp(34px, 6vw, 72px) 0; }
+    .portal-card, .mission-card, .quick-action, .department-card { border: 1px solid rgba(245,241,232,.14); background: linear-gradient(145deg, rgba(255,255,255,.095), rgba(255,255,255,.035)); box-shadow: 0 26px 80px rgba(0,0,0,.28); backdrop-filter: blur(22px); border-radius: 28px; padding: 26px; }
+    .portal-back { display: inline-flex; margin-bottom: 26px; color: var(--gold-light); font-weight: 850; letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; }
+    .dashboard-top { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); gap: 24px; align-items: stretch; margin-bottom: 24px; }
+    .portal-lockup { display: flex; align-items: center; gap: 18px; margin-bottom: 30px; }
+    .portal-lockup img { width: 72px; height: 72px; object-fit: contain; }
+    .portal-lockup strong, .mission-card strong, .department-card strong, .quick-action strong { display: block; margin-bottom: 8px; color: var(--gold-light); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; }
+    .portal-card h1 { font-family: "Inter", sans-serif; font-size: clamp(2.5rem, 6vw, 5.7rem); font-weight: 800; letter-spacing: -.052em; line-height: 1.04; margin-bottom: 18px; }
+    .portal-card p, .mission-card p, .department-card p, .quick-action p { color: rgba(245,241,232,.74); line-height: 1.75; }
+    .brief-list { display: grid; gap: 12px; margin-top: 18px; list-style: none; }
+    .brief-list li { padding: 14px 16px; border-radius: 18px; background: rgba(6,19,35,.48); color: rgba(245,241,232,.82); line-height: 1.5; }
+    .mission-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
+    .mission-card span { display: block; font-size: 2rem; margin-bottom: 12px; }
+    .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+    .department-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .portal-notice { margin-top: 18px; padding: 16px 18px; border-radius: 20px; border: 1px solid rgba(212,175,55,.24); background: rgba(212,175,55,.08); font-size: .92rem; }
+    @media (max-width: 960px) { .dashboard-top, .mission-grid, .quick-actions, .department-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .dashboard-top, .mission-grid, .quick-actions, .department-grid { grid-template-columns: 1fr; } .portal-lockup { align-items: flex-start; } }
+  </style>
+</head>
+<body class="staff-portal">
+  <main class="portal-shell">
+    <a class="portal-back" href="index.html">Return to public site</a>
+    <section class="portal-card" aria-label="Heartland Pride Center Headquarters dashboard">
+      <div class="portal-lockup">
+        <img src="logo.png" alt="Heartland Pride Center logo">
+        <div><strong>Staff Portal Prototype</strong><p>Heartland Pride Center Headquarters</p></div>
+      </div>
+      <h1>Welcome back. The community is waiting.</h1>
+      <p>This is the first visual prototype of the private operations center. The live version will use secure authentication before any sensitive information is stored here.</p>
+      <p class="portal-notice">Prototype mode: preview only. No private client, volunteer, donor, or partner-sensitive information should be stored on this page yet.</p>
+    </section>
+
+    <div class="dashboard-top" style="margin-top:24px">
+      <div class="portal-card">
+        <p class="eyebrow">Today’s Mission</p>
+        <h2>Mission Status</h2>
+        <p>Urgent items, upcoming opportunities, follow-ups, and the work that keeps HPC moving.</p>
+      </div>
+      <div class="portal-card">
+        <p class="eyebrow">Briefing</p>
+        <ul class="brief-list">
+          <li><strong>Community Radar:</strong> build the 2026 event pipeline and 2027 Pride calendar.</li>
+          <li><strong>Partnerships:</strong> track BayCare, We Care Central Florida, Polk Pride, and local health partners.</li>
+          <li><strong>Operations:</strong> add secure login, mission calendar, and internal trackers.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mission-grid">
+      <article class="mission-card"><span>📡</span><strong>Community Radar</strong><p>Events, vendor deadlines, Pride planning, health fairs, festivals, and community intelligence.</p></article>
+      <article class="mission-card"><span>🤝</span><strong>Partnerships</strong><p>Organizations, contacts, follow-ups, meeting notes, and relationship status.</p></article>
+      <article class="mission-card"><span>❤️</span><strong>Affirming Network</strong><p>Business applications, verification, heart ratings, certificates, and map management.</p></article>
+      <article class="mission-card"><span>📦</span><strong>Outreach</strong><p>Inventory, packing lists, booth kits, QR codes, and event readiness.</p></article>
+    </div>
+
+    <div class="quick-actions">
+      <article class="quick-action"><strong>Start My Day</strong><p>Generate a focused morning briefing from events, emails, calendar items, and deadlines.</p></article>
+      <article class="quick-action"><strong>Add Opportunity</strong><p>Capture an event, grant, partner, volunteer inquiry, or business lead before it gets lost.</p></article>
+      <article class="quick-action"><strong>End My Day</strong><p>Record wins, lessons learned, follow-ups, and notes for the Legacy Journal.</p></article>
+    </div>
+
+    <div class="department-grid">
+      <article class="department-card"><strong>Mission Calendar</strong><p>The official schedule for outreach, trainings, grant deadlines, meetings, and community events.</p></article>
+      <article class="department-card"><strong>Volunteer Center</strong><p>Applications, training, availability, event assignments, hours, and recognition.</p></article>
+      <article class="department-card"><strong>Grant Center</strong><p>Funding opportunities, deadlines, applications, required documents, reports, and award history.</p></article>
+      <article class="department-card"><strong>Media Center</strong><p>Approved logos, photos, flyers, Canva exports, social graphics, and event albums.</p></article>
+      <article class="department-card"><strong>Knowledge Base</strong><p>Policies, SOPs, board documents, templates, training material, and internal guides.</p></article>
+      <article class="department-card"><strong>Legacy Journal</strong><p>Event notes, lessons learned, organizer details, supply counts, and institutional memory.</p></article>
+    </div>
+  </main>
+</body>
+</html>
