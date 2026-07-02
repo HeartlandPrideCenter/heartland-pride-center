@@ -30,12 +30,7 @@
       <div class="stage-copy">
         <p class="eyebrow">Land of Hearts</p>
         <h2>A growing map of affirming places.</h2>
-        <p>Each published business becomes part of the public network after review. The map below is designed to grow from the first few affirming businesses into a living community layer across the Heartland.</p>
-        <div class="network-stats">
-          <div><strong id="publicBusinessCount">0</strong><span>Published businesses</span></div>
-          <div><strong id="publicCategoryCount">0</strong><span>Categories represented</span></div>
-          <div><strong id="featuredCount">0</strong><span>Featured hearts</span></div>
-        </div>
+        <p>Each published business becomes part of the public network after review. Explore the map, find affirming places, or add your own heart to the growing network.</p>
       </div>
       <div class="heart-map" aria-label="Decorative Land of Hearts map preview">
         <div class="map-glow"></div>
@@ -107,7 +102,7 @@
     function publishedBusinesses(){ return (readData().businesses || []).filter(b => b.status === 'Published'); }
     function businessCard(b){
       const link = b.website ? `<a class="btn secondary" href="${b.website}" target="_blank" rel="noopener">Visit Website</a>` : '';
-      return `<article class="business-card"><div><small>${b.category || 'Local Business'} · ${b.heart || 'Community Heart'}</small><h3>${b.name}</h3><p>${b.description || 'Affirming business listing.'}</p><p class="business-address">${b.address || 'Polk County, Florida'}</p><span class="heart-badge">♥ ${b.status}</span></div><div class="business-actions">${link}</div></article>`;
+      return `<article class="business-card"><div><small>${b.category || 'Local Business'} · ${b.heart || 'Community Heart'}</small><h3>${b.name}</h3><p>${b.description || 'Affirming business listing.'}</p><p class="business-address">${b.address || 'Polk County, Florida'}</p><span class="heart-badge">♥ ${b.heart || 'Community Heart'}</span></div><div class="business-actions">${link}</div></article>`;
     }
     function renderDirectory(){
       const search = (document.getElementById('businessSearch')?.value || '').toLowerCase();
@@ -121,10 +116,7 @@
         const text = [b.name,b.category,b.address,b.description,b.heart].join(' ').toLowerCase();
         return (!search || text.includes(search)) && (filter.value === 'all' || b.category === filter.value);
       });
-      publicBusinessCount.textContent = businesses.length;
-      publicCategoryCount.textContent = categories.length;
-      featuredCount.textContent = businesses.filter(b => b.featured || b.heart === 'Gold Heart').length;
-      businessDirectory.innerHTML = filtered.length ? filtered.map(businessCard).join('') : '<div class="directory-note"><strong>No published businesses match yet.</strong><p>Approved businesses will appear here after Backstage review.</p></div>';
+      businessDirectory.innerHTML = filtered.length ? filtered.map(businessCard).join('') : '<div class="directory-note"><strong>No published businesses yet.</strong><p>Approved businesses will appear here after Backstage review.</p></div>';
     }
     seedIfEmpty();
     renderDirectory();
