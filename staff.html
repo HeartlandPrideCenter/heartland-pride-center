@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Staff Portal | Heartland OS</title>
+  <title>Backstage | Heartland Pride Center</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,130 +11,221 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="staff-os.css" />
 </head>
-<body class="ops-page">
-  <div class="staff-shell">
-    <section class="staff-login" aria-label="Staff login">
-      <div class="login-card">
-        <div class="login-panel">
-          <span class="staff-eyebrow">Authorized Access</span>
-          <h1>Heartland OS</h1>
-          <p>One command center for the work behind Heartland Pride Center.</p>
-          <div class="staff-rainbow"></div>
-          <form class="staff-form" id="loginForm">
-            <label>Username<input class="staff-input" id="user" required autocomplete="username"></label>
-            <label>Password<input class="staff-input" id="pass" type="password" required autocomplete="current-password"></label>
-            <button class="btn primary" type="submit">Sign In</button>
-            <p id="loginError" style="display:none;color:#ffb4b4;font-weight:800">Enter a username and password.</p>
-          </form>
-          <p>Prototype access only. Secure staff accounts and permissions should be added before storing private records.</p>
-        </div>
-        <div class="login-panel">
-          <span class="staff-eyebrow">Staff Portal</span>
-          <h1>Clean cockpit. No wobble.</h1>
-          <p>The rebuilt portal uses one left menu, one search bar, and fixed module sections so calendars and dashboards stay visible.</p>
-          <div class="staff-rainbow"></div>
-          <p>Sign in to open the Operations Center.</p>
-        </div>
+<body class="backstage-page">
+  <section class="backstage-login" aria-label="Backstage login">
+    <div class="login-wrap">
+      <div class="login-panel">
+        <span class="eyeline">Authorized Staff Access</span>
+        <h1>Backstage</h1>
+        <p>Manage what appears On Stage across the Heartland Pride Center website.</p>
+        <div class="backstage-rainbow"></div>
+        <form class="login-form" id="loginForm">
+          <label class="login-field">Username<input id="user" required autocomplete="username"></label>
+          <label class="login-field">Password<input id="pass" type="password" required autocomplete="current-password"></label>
+          <button class="btn primary" type="submit">Enter Backstage</button>
+          <p id="loginError" style="display:none;color:#ffb4b4;font-weight:800">Enter a username and password.</p>
+        </form>
+        <p>Prototype access only. Real staff accounts and permissions should be added before storing private records.</p>
       </div>
-    </section>
+      <div class="login-panel">
+        <span class="eyeline">The Rule</span>
+        <h1>Backstage controls On Stage.</h1>
+        <p>Businesses, events, applications, announcements, and people are managed here. Email, calendars, and communications stay in the tools already built for them.</p>
+        <div class="backstage-rainbow"></div>
+        <p>Clean foundation. No old portal leftovers. No overbuilt cockpit goblinry.</p>
+      </div>
+    </div>
+  </section>
 
-    <section class="staff-app" aria-label="Heartland OS application">
-      <aside class="staff-sidebar">
-        <a class="staff-brand" href="staff.html#home" aria-label="Heartland OS home">
-          <img src="logo.png" alt="Heartland Pride Center logo">
-          <div><strong>Heartland OS</strong><span>Staff Portal</span></div>
-        </a>
-        <nav class="staff-nav" aria-label="Staff portal navigation">
-          <a href="#home" data-section="home" class="active">Home</a>
-          <a href="#inbox" data-section="inbox">Inbox</a>
-          <a href="#communications" data-section="communications">Communications</a>
-          <a href="#calendar" data-section="calendar">Calendar</a>
-          <a href="#events" data-section="events">Events</a>
-          <a href="#people" data-section="people">People</a>
-          <a href="#partnerships" data-section="partnerships">Partnerships</a>
-          <a href="#business" data-section="business">Business Network</a>
-          <a href="#volunteers" data-section="volunteers">Volunteers</a>
-          <a href="#grants" data-section="grants">Grants</a>
-          <a href="#inventory" data-section="inventory">Inventory</a>
-          <a href="#resources" data-section="resources">Resource Hub</a>
-          <a href="#radar" data-section="radar">Community Radar</a>
-          <a href="#media" data-section="media">Media Library</a>
-          <a href="#documents" data-section="documents">Staff Documents</a>
-          <a href="#reports" data-section="reports">Reports</a>
-          <a href="#admin" data-section="admin">Admin</a>
-        </nav>
-        <div class="staff-nav-bottom">
-          <a href="index.html">Return to Public Site</a>
-          <button type="button" id="signOut">Sign Out</button>
+  <section class="backstage-app" aria-label="Backstage application">
+    <aside class="side-stage" id="sideStage">
+      <a class="stage-brand" href="#dashboard" aria-label="Backstage dashboard">
+        <img src="logo.png" alt="Heartland Pride Center logo">
+        <div><strong>Backstage</strong><span>Heartland Pride Center</span></div>
+      </a>
+      <button class="stage-btn mobile-menu" type="button" id="menuBtn">Menu</button>
+      <nav class="stage-nav" aria-label="Backstage navigation">
+        <a class="active" href="#dashboard" data-section="dashboard">Dashboard</a>
+        <a href="#businesses" data-section="businesses">Business Network</a>
+        <a href="#events" data-section="events">Events</a>
+        <a href="#applications" data-section="applications">Applications</a>
+        <a href="#announcements" data-section="announcements">Announcements</a>
+        <a href="#people" data-section="people">Volunteers & Staff</a>
+      </nav>
+      <div class="utility">
+        <a href="index.html">Public Site</a>
+        <button type="button" id="signOut">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="stage-main">
+      <header class="glancebar" aria-label="Quick status dashboard">
+        <div class="glance-grid">
+          <div class="glance-pill"><strong>Pending Apps</strong><b id="glanceApps">0</b></div>
+          <div class="glance-pill"><strong>Live Businesses</strong><b id="glanceBusinesses">0</b></div>
+          <div class="glance-pill"><strong>Upcoming Events</strong><b id="glanceEvents">0</b></div>
+          <div class="glance-pill"><strong>Live Announcements</strong><b id="glanceAnnouncements">0</b></div>
+          <div class="glance-pill"><strong>Active People</strong><b id="glancePeople">0</b></div>
         </div>
-      </aside>
+      </header>
 
-      <main class="staff-main">
-        <header class="staff-topbar">
-          <form class="staff-search" id="searchForm" role="search">
-            <input id="globalSearch" placeholder="Search Heartland OS..." autocomplete="off" />
-            <button class="staff-btn" type="submit">Search</button>
-          </form>
-        </header>
-        <div class="staff-content">
-          <section class="staff-section active" id="home">
-            <div class="staff-module">
-              <div class="staff-head"><div><span class="staff-eyebrow">Home</span><h1 id="greeting">Good morning, Gabriel.</h1><p id="dateLine"></p></div></div>
-              <div class="staff-four">
-                <div class="staff-stat"><strong>Urgent</strong><b id="urgentCount">0</b></div>
-                <div class="staff-stat"><strong>Inbox</strong><b id="inboxCount">0</b></div>
-                <div class="staff-stat"><strong>Tasks</strong><b id="taskCount">0</b></div>
-                <div class="staff-stat"><strong>Events</strong><b id="eventCount">0</b></div>
-              </div>
+      <div class="workspace">
+        <section class="stage-section active" id="dashboard">
+          <div class="stage-panel">
+            <div class="stage-head">
+              <div><span class="eyeline">Dashboard</span><h1>Current stage status.</h1><p id="dateLine"></p></div>
             </div>
-            <div class="staff-grid">
-              <div class="staff-module"><span class="staff-eyebrow">Daily Brief</span><h2>What needs attention</h2><div id="brief"></div><h2>Today’s Queue</h2><div class="staff-queue" id="taskQueue"></div></div>
-              <div class="staff-module"><span class="staff-eyebrow">Quick Intake</span><h2>Add an item</h2><form class="staff-form-grid" id="intakeForm"><div class="staff-field"><label>Type</label><select id="type"><option>Task</option><option>Call</option><option>Website Submission</option><option>Event</option><option>Volunteer</option><option>Business Application</option><option>Partner Inquiry</option><option>Grant</option><option>Inventory Alert</option></select></div><div class="staff-field"><label>Urgency</label><select id="urgency"><option>Normal</option><option>Soon</option><option>Urgent</option></select></div><div class="staff-field staff-span"><label>Title</label><input id="title" placeholder="Brief description"></div><div class="staff-field staff-span"><label>Details</label><textarea id="details" placeholder="Who, what, date, next action..."></textarea></div><button class="staff-btn" type="submit">Add to Home</button></form></div>
+            <div class="stats">
+              <div class="stage-stat"><strong>Needs Review</strong><b id="dashReview">0</b></div>
+              <div class="stage-stat"><strong>Published</strong><b id="dashPublished">0</b></div>
+              <div class="stage-stat"><strong>Drafts</strong><b id="dashDrafts">0</b></div>
+              <div class="stage-stat"><strong>Hidden</strong><b id="dashHidden">0</b></div>
             </div>
-          </section>
+          </div>
+          <div class="two-col">
+            <div class="stage-panel"><span class="eyeline">Action Queue</span><h2>What needs a decision</h2><div class="records" id="reviewQueue"></div></div>
+            <div class="stage-panel"><span class="eyeline">Stage Health</span><h2>Quick read</h2><div id="healthCards"></div></div>
+          </div>
+        </section>
 
-          <section class="staff-section" id="calendar">
-            <div class="staff-module calendar-panel">
-              <div class="staff-head"><div><span class="staff-eyebrow">Calendar</span><h1>Mission Calendar</h1><p>Clean calendar layers with no overlap. Select a layer, queue an item, and keep scheduling separated by purpose.</p></div><a class="staff-btn" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener">Open Google Calendar</a></div>
-              <div class="calendar-board">
-                <aside class="staff-card"><span class="staff-eyebrow">Layers</span><div class="calendar-layers" id="calendarLayers"></div></aside>
-                <section class="staff-card calendar-panel"><span class="staff-eyebrow" id="activeLabel">HPC | Mission</span><h2 id="activeTitle">Mission Calendar</h2><p id="activeDesc"></p><div class="calendar-grid" id="weekGrid"></div><form class="staff-form-grid" id="calendarForm" style="margin-top:16px"><div class="staff-field"><label>What needs scheduled?</label><input id="calTitle" placeholder="Event, reminder, follow-up, deadline"></div><div class="staff-field"><label>When?</label><input id="calDate" placeholder="Today, Friday, July 15"></div><div class="staff-field staff-span"><label>Details</label><textarea id="calNotes" placeholder="Organizer, contact, location, reminder notes..."></textarea></div><button class="staff-btn" type="submit">Queue on This Calendar</button></form><div class="staff-queue" id="calendarQueue"></div></section>
-              </div>
+        <section class="stage-section" id="businesses">
+          <div class="stage-panel">
+            <div class="stage-head"><div><span class="eyeline">Business Network</span><h1>Land of Hearts controls.</h1><p>Add, approve, feature, hide, or update businesses that appear on the public affirming business network.</p></div></div>
+            <div class="two-col">
+              <form class="stage-card form-grid" id="businessForm">
+                <div class="field"><label>Business Name</label><input id="businessName" required></div>
+                <div class="field"><label>Category</label><input id="businessCategory" placeholder="Restaurant, salon, clinic..."></div>
+                <div class="field span"><label>Address</label><input id="businessAddress"></div>
+                <div class="field"><label>Heart Rating</label><select id="businessHeart"><option>Gold Heart</option><option>Rainbow Heart</option><option>Community Heart</option></select></div>
+                <div class="field"><label>Status</label><select id="businessStatus"><option>Pending</option><option>Published</option><option>Draft</option><option>Hidden</option></select></div>
+                <div class="field span"><label>Description</label><textarea id="businessDescription"></textarea></div>
+                <button class="stage-btn" type="submit">Save Business</button>
+              </form>
+              <div class="drawer"><span class="eyeline">On Stage</span><h2>Public display</h2><p>Published businesses become public Land of Hearts listings. Pending and draft records stay Backstage.</p></div>
             </div>
-          </section>
+            <div class="records" id="businessRecords"></div>
+          </div>
+        </section>
 
-          <section class="staff-section" id="search-results"><div class="staff-module"><span class="staff-eyebrow">Search</span><h1>Search Results</h1><div id="searchResults"></div></div></section>
-        </div>
-      </main>
-    </section>
-  </div>
+        <section class="stage-section" id="events">
+          <div class="stage-panel">
+            <div class="stage-head"><div><span class="eyeline">Events</span><h1>Public event controls.</h1><p>Create, edit, publish, or archive events shown On Stage.</p></div></div>
+            <div class="two-col">
+              <form class="stage-card form-grid" id="eventForm">
+                <div class="field"><label>Event Title</label><input id="eventTitle" required></div>
+                <div class="field"><label>Date</label><input id="eventDate" placeholder="July 15, 2026"></div>
+                <div class="field"><label>Location</label><input id="eventLocation"></div>
+                <div class="field"><label>Status</label><select id="eventStatus"><option>Draft</option><option>Pending</option><option>Published</option><option>Hidden</option></select></div>
+                <div class="field span"><label>Description</label><textarea id="eventDescription"></textarea></div>
+                <button class="stage-btn" type="submit">Save Event</button>
+              </form>
+              <div class="drawer"><span class="eyeline">On Stage</span><h2>Public display</h2><p>Published events feed the public Events section. Drafts let staff prepare without exposing unfinished details.</p></div>
+            </div>
+            <div class="records" id="eventRecords"></div>
+          </div>
+        </section>
+
+        <section class="stage-section" id="applications">
+          <div class="stage-panel">
+            <div class="stage-head"><div><span class="eyeline">Applications</span><h1>Website submissions.</h1><p>Review form submissions from businesses, volunteers, partners, sponsors, and general contact forms.</p></div></div>
+            <form class="stage-card form-grid" id="applicationForm">
+              <div class="field"><label>Application Type</label><select id="applicationType"><option>Business Network</option><option>Volunteer</option><option>Partner Inquiry</option><option>Sponsor Interest</option><option>General Contact</option></select></div>
+              <div class="field"><label>Status</label><select id="applicationStatus"><option>Pending</option><option>Published</option><option>Draft</option><option>Hidden</option></select></div>
+              <div class="field"><label>Name / Organization</label><input id="applicationName" required></div>
+              <div class="field"><label>Email</label><input id="applicationEmail"></div>
+              <div class="field span"><label>Notes</label><textarea id="applicationNotes"></textarea></div>
+              <button class="stage-btn" type="submit">Save Application</button>
+            </form>
+            <div class="records" id="applicationRecords"></div>
+          </div>
+        </section>
+
+        <section class="stage-section" id="announcements">
+          <div class="stage-panel">
+            <div class="stage-head"><div><span class="eyeline">Announcements</span><h1>Homepage announcements.</h1><p>Control the public announcements, homepage banners, alerts, and featured updates shown On Stage.</p></div></div>
+            <form class="stage-card form-grid" id="announcementForm">
+              <div class="field"><label>Title</label><input id="announcementTitle" required></div>
+              <div class="field"><label>Status</label><select id="announcementStatus"><option>Draft</option><option>Pending</option><option>Published</option><option>Hidden</option></select></div>
+              <div class="field"><label>Display Window</label><input id="announcementWindow" placeholder="Now through July 31"></div>
+              <div class="field"><label>Priority</label><select id="announcementPriority"><option>Normal</option><option>Featured</option><option>Urgent</option></select></div>
+              <div class="field span"><label>Message</label><textarea id="announcementMessage"></textarea></div>
+              <button class="stage-btn" type="submit">Save Announcement</button>
+            </form>
+            <div class="records" id="announcementRecords"></div>
+          </div>
+        </section>
+
+        <section class="stage-section" id="people">
+          <div class="stage-panel">
+            <div class="stage-head"><div><span class="eyeline">Volunteers & Staff</span><h1>People and assignments.</h1><p>Track volunteers, staff, roles, assignments, and active status. This is Backstage-only unless a person is intentionally featured On Stage later.</p></div></div>
+            <form class="stage-card form-grid" id="personForm">
+              <div class="field"><label>Name</label><input id="personName" required></div>
+              <div class="field"><label>Role</label><input id="personRole" placeholder="Volunteer, Staff, Board..."></div>
+              <div class="field"><label>Assignment</label><input id="personAssignment" placeholder="Outreach, intake, events..."></div>
+              <div class="field"><label>Status</label><select id="personStatus"><option>Published</option><option>Pending</option><option>Draft</option><option>Hidden</option></select></div>
+              <div class="field span"><label>Notes</label><textarea id="personNotes"></textarea></div>
+              <button class="stage-btn" type="submit">Save Person</button>
+            </form>
+            <div class="records" id="personRecords"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </section>
+
   <div class="toast" id="toast"></div>
+
 <script>
-const body=document.body, sessionKey='hpcStaffSession', itemKey='hpcStaffItems', calKey='hpcCalendarWorkspaceItems';
-const nav=document.querySelectorAll('.staff-nav a');
-let items=JSON.parse(localStorage.getItem(itemKey)||JSON.stringify([{type:'Task',urgency:'Urgent',title:'Review staff portal rebuild',details:'Check fixed left menu, search-only top bar, bottom sign out, and calendar visibility.'},{type:'Partner Inquiry',urgency:'Soon',title:'Follow up with potential partners',details:'Keep the partnership lane moving without burying it in general tasks.'},{type:'Inventory Alert',urgency:'Soon',title:'Outreach supplies',details:'Check print materials and condom supply before next outreach.'}]));
-const calendars=[['HPC | Mission','Mission','Internal operations, planning, and priorities.'],['HPC | Community Radar','Community Radar','Watch items, vendor windows, registration deadlines, and opportunities.'],['HPC | Outreach & Events','Outreach & Events','Confirmed public engagements, booths, workshops, and outreach.'],['HPC | Partnerships','Partnerships','Meetings, follow-ups, networking, and collaboration deadlines.'],['HPC | Grants & Funding','Grants & Funding','Grant deadlines, reports, funding windows, and donor follow-ups.'],['HPC | Volunteers','Volunteers','Training, availability, coverage, orientations, and assignments.'],['HPC | Communications','Communications','Campaigns, announcements, posts, and email reminders.'],['HPC | Board & Governance','Board & Governance','Board meetings, filings, compliance, policy, and annual requirements.'],['HPC | Annual Planning','Annual Planning','Recurring yearly reminders and seasonal preparation.']];
-let activeCal=0, calItems=JSON.parse(localStorage.getItem(calKey)||'[]');
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
-function unlock(){body.classList.add('logged');sessionStorage.setItem(sessionKey,'1');route(location.hash||'#home')}
-function signout(){sessionStorage.removeItem(sessionKey);body.classList.remove('logged');location.hash='home'}
+const sessionKey='hpcBackstageSession';
+const storeKey='hpcBackstageDataV1';
+const defaultData={
+  businesses:[{name:'Example Affirming Business',category:'Community Partner',address:'Polk County, FL',heart:'Gold Heart',status:'Pending',description:'Review this sample, then replace it with real applications.'}],
+  events:[{title:'Community Outreach Pop-Up',date:'TBD',location:'Polk County',status:'Draft',description:'Prepare details before publishing On Stage.'}],
+  applications:[{type:'Business Network',name:'New business application',email:'',status:'Pending',notes:'Incoming website forms will land here for review.'}],
+  announcements:[{title:'Welcome to Heartland Pride Center',window:'Now',priority:'Featured',status:'Published',message:'A warm public update can be controlled from Backstage.'}],
+  people:[{name:'Volunteer Candidate',role:'Volunteer',assignment:'Awaiting review',status:'Pending',notes:'Volunteer applications can become active people records.'}]
+};
+let data=JSON.parse(localStorage.getItem(storeKey)||JSON.stringify(defaultData));
+const sections=document.querySelectorAll('.stage-section');
+const navLinks=document.querySelectorAll('.stage-nav a');
+function save(){localStorage.setItem(storeKey,JSON.stringify(data));renderAll()}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
+function unlock(){document.body.classList.add('logged');sessionStorage.setItem(sessionKey,'1');route(location.hash||'#dashboard')}
 if(sessionStorage.getItem(sessionKey)) unlock();
-loginForm.addEventListener('submit',e=>{e.preventDefault(); if(user.value.trim()&&pass.value.trim()) unlock(); else loginError.style.display='block'});
-signOut.addEventListener('click',signout);
-function route(hash){const id=(hash||'#home').replace('#','')||'home';document.querySelectorAll('.staff-section').forEach(s=>s.classList.remove('active'));let target=document.getElementById(id);if(!target&&['inbox','communications','events','people','partnerships','business','volunteers','grants','inventory','resources','radar','media','documents','reports','admin'].includes(id)){target=buildPlaceholder(id)}(target||document.getElementById('home')).classList.add('active');nav.forEach(a=>a.classList.toggle('active',a.dataset.section===id));window.scrollTo({top:0,behavior:'smooth'})}
-function buildPlaceholder(id){let names={inbox:'Inbox',communications:'Communications',events:'Events',people:'People',partnerships:'Partnerships',business:'Business Network',volunteers:'Volunteers',grants:'Grants',inventory:'Inventory',resources:'Resource Hub',radar:'Community Radar',media:'Media Library',documents:'Staff Documents',reports:'Reports',admin:'Admin'};let s=document.createElement('section');s.className='staff-section';s.id=id;s.innerHTML=`<div class="staff-module"><span class="staff-eyebrow">${names[id]}</span><h1>${names[id]}</h1><p>This section now uses the same stable Heartland OS shell. Add records from Quick Intake for now while the deeper module tools are built out.</p><div class="staff-three"><div class="staff-card"><strong>Queue</strong><p>Items connected to this area appear from Home and Search.</p></div><div class="staff-card"><strong>Next Action</strong><p>Use this as the lane for ${names[id].toLowerCase()} work.</p></div><div class="staff-card"><strong>Status</strong><p>Ready for deeper tools without changing the menu or top bar.</p></div></div><div class="staff-queue" id="queue-${id}"></div></div>`;document.querySelector('.staff-content').appendChild(s);renderAreaQueue(id);return s}
-window.addEventListener('hashchange',()=>route(location.hash));nav.forEach(a=>a.addEventListener('click',()=>route(a.hash)));
-function saveItems(){localStorage.setItem(itemKey,JSON.stringify(items));renderHome();document.querySelectorAll('[id^="queue-"]').forEach(q=>renderAreaQueue(q.id.replace('queue-','')))}
-function eventCard(x,i){return `<div class="staff-event"><div><small>${x.type} · ${x.urgency}</small><strong>${x.title}</strong><p>${x.details||''}</p></div><button class="staff-btn" onclick="completeItem(${i})">Done</button></div>`}
-window.completeItem=i=>{items.splice(i,1);saveItems();toast('Completed')};
-function renderHome(){let urgent=items.filter(x=>x.urgency==='Urgent'), inbox=items.filter(x=>/Submission|Application|Inquiry/.test(x.type)), tasks=items.filter(x=>x.type==='Task'||x.type==='Call'), events=items.filter(x=>x.type==='Event');urgentCount.textContent=urgent.length;inboxCount.textContent=inbox.length;taskCount.textContent=tasks.length;eventCount.textContent=events.length;brief.innerHTML=urgent.length?`<div class="staff-result"><strong>${urgent.length} urgent item${urgent.length>1?'s':''} need attention.</strong><p>${urgent[0].title}</p></div>`:'<div class="staff-result"><strong>No urgent items staged.</strong><p>The board is calm for the moment.</p></div>';taskQueue.innerHTML=items.map((x,i)=>eventCard(x,i)).join('')||'<div class="staff-result">No items in the queue.</div>'}
-function renderAreaQueue(id){let q=document.getElementById('queue-'+id);if(!q)return;let label={inbox:['Website Submission','Business Application','Partner Inquiry'],communications:['Communications'],events:['Event'],people:['Volunteer'],partnerships:['Partner Inquiry'],business:['Business Application'],volunteers:['Volunteer'],grants:['Grant'],inventory:['Inventory Alert']}[id]||[];let list=items.filter(x=>label.includes(x.type));q.innerHTML=list.map(x=>eventCard(x,items.indexOf(x))).join('')||'<div class="staff-result">No active items in this lane yet.</div>'}
-intakeForm.addEventListener('submit',e=>{e.preventDefault();items.unshift({type:type.value,urgency:urgency.value,title:title.value||'New item',details:details.value||''});e.target.reset();saveItems();toast('Added to Home')});
-function renderCalendar(){calendarLayers.innerHTML=calendars.map((c,i)=>`<button class="staff-btn calendar-layer ${i===activeCal?'active':''}" onclick="selectCalendar(${i})">${c[0]}</button>`).join('');let c=calendars[activeCal];activeLabel.textContent=c[0];activeTitle.textContent=c[1]+' Calendar';activeDesc.textContent=c[2];weekGrid.innerHTML=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<div class="staff-day"><strong>${d}</strong><small>${['Planning','Calls','Follow-ups','Review','Reports','Events','Closed / watch'][i]}</small></div>`).join('');let list=calItems.filter(x=>x.layer===c[0]);calendarQueue.innerHTML=list.map(x=>`<div class="staff-event"><div><small>${x.layer} · ${x.date}</small><strong>${x.title}</strong><p>${x.notes}</p></div><button class="staff-btn" onclick="calItems.splice(${calItems.indexOf(x)},1);saveCalendar()">Done</button></div>`).join('')||'<div class="staff-result">No queued items for this calendar.</div>'}
-window.selectCalendar=i=>{activeCal=i;renderCalendar()};function saveCalendar(){localStorage.setItem(calKey,JSON.stringify(calItems));renderCalendar()}
-calendarForm.addEventListener('submit',e=>{e.preventDefault();calItems.unshift({layer:calendars[activeCal][0],title:calTitle.value||'New calendar item',date:calDate.value||'TBD',notes:calNotes.value||''});e.target.reset();saveCalendar();toast('Queued on calendar')});
-searchForm.addEventListener('submit',e=>{e.preventDefault();let q=globalSearch.value.trim().toLowerCase();location.hash='search-results';let pool=[...items.map(x=>({title:x.title,meta:x.type,details:x.details})),...calItems.map(x=>({title:x.title,meta:x.layer+' · '+x.date,details:x.notes}))];let hits=q?pool.filter(x=>(x.title+' '+x.meta+' '+x.details).toLowerCase().includes(q)):[];searchResults.innerHTML=hits.length?hits.map(x=>`<div class="staff-result"><strong>${x.title}</strong><p>${x.meta}: ${x.details||''}</p></div>`).join(''):'<div class="staff-result"><strong>No results yet.</strong><p>Try another search or add an item from Home.</p></div>'});
-dateLine.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});let h=new Date().getHours();greeting.textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+', Gabriel.';renderHome();renderCalendar();route(location.hash||'#home');
+loginForm.addEventListener('submit',e=>{e.preventDefault();if(user.value.trim()&&pass.value.trim())unlock();else loginError.style.display='block'});
+signOut.addEventListener('click',()=>{sessionStorage.removeItem(sessionKey);document.body.classList.remove('logged');location.hash='dashboard'});
+menuBtn.addEventListener('click',()=>sideStage.classList.toggle('open'));
+function route(hash){const id=(hash||'#dashboard').replace('#','')||'dashboard';sections.forEach(s=>s.classList.remove('active'));(document.getElementById(id)||dashboard).classList.add('active');navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===id));sideStage.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'})}
+window.addEventListener('hashchange',()=>route(location.hash));navLinks.forEach(a=>a.addEventListener('click',()=>route(a.hash)));
+function statusClass(status){return String(status||'Draft').toLowerCase()}
+function countStatus(status){return ['businesses','events','applications','announcements','people'].flatMap(k=>data[k]).filter(x=>x.status===status).length}
+function record(item,collection,index,primary,secondary,body){return `<div class="record-card"><div><small>${secondary}</small><strong>${primary}</strong><p>${body||''}</p><span class="status ${statusClass(item.status)}">${item.status}</span></div><div class="actions"><button class="stage-btn" onclick="setStatus('${collection}',${index},'Published')">Publish</button><button class="stage-btn" onclick="setStatus('${collection}',${index},'Hidden')">Hide</button><button class="stage-btn" onclick="removeRecord('${collection}',${index})">Delete</button></div></div>`}
+window.setStatus=(collection,index,status)=>{data[collection][index].status=status;save();toast(status==='Published'?'Published On Stage':'Updated')};
+window.removeRecord=(collection,index)=>{data[collection].splice(index,1);save();toast('Removed')};
+function renderCollection(collection,el,mapper){el.innerHTML=data[collection].map((item,i)=>mapper(item,i)).join('')||'<div class="record-card"><div><strong>No records yet.</strong><p>Add one above.</p></div></div>'}
+function renderAll(){
+  glanceApps.textContent=data.applications.filter(x=>x.status==='Pending').length;
+  glanceBusinesses.textContent=data.businesses.filter(x=>x.status==='Published').length;
+  glanceEvents.textContent=data.events.filter(x=>x.status==='Published').length;
+  glanceAnnouncements.textContent=data.announcements.filter(x=>x.status==='Published').length;
+  glancePeople.textContent=data.people.filter(x=>x.status==='Published').length;
+  dashReview.textContent=countStatus('Pending');dashPublished.textContent=countStatus('Published');dashDrafts.textContent=countStatus('Draft');dashHidden.textContent=countStatus('Hidden');
+  const queue=['applications','businesses','events','announcements','people'].flatMap(k=>data[k].map((x,i)=>({k,x,i}))).filter(row=>row.x.status==='Pending');
+  reviewQueue.innerHTML=queue.map(row=>record(row.x,row.k,row.i,row.x.name||row.x.title,row.k,row.x.notes||row.x.description||row.x.message||'Needs review.')).join('')||'<div class="record-card"><div><strong>No pending items.</strong><p>Everything that needs review has been cleared.</p></div></div>';
+  healthCards.innerHTML=`<div class="stage-card"><strong>Stage is controlled by Backstage.</strong><p>${countStatus('Published')} published records are currently ready for public display.</p></div><div class="stage-card"><strong>Watch the queue.</strong><p>${countStatus('Pending')} items need a staff decision before moving On Stage.</p></div>`;
+  renderCollection('businesses',businessRecords,(x,i)=>record(x,'businesses',i,x.name,`${x.category||'Business'} · ${x.heart||'Heart'}`,`${x.address||''} ${x.description||''}`));
+  renderCollection('events',eventRecords,(x,i)=>record(x,'events',i,x.title,`${x.date||'TBD'} · ${x.location||'Location TBD'}`,x.description));
+  renderCollection('applications',applicationRecords,(x,i)=>record(x,'applications',i,x.name,`${x.type} · ${x.email||'No email'}`,x.notes));
+  renderCollection('announcements',announcementRecords,(x,i)=>record(x,'announcements',i,x.title,`${x.priority||'Normal'} · ${x.window||'No window'}`,x.message));
+  renderCollection('people',personRecords,(x,i)=>record(x,'people',i,x.name,`${x.role||'Role TBD'} · ${x.assignment||'No assignment'}`,x.notes));
+}
+businessForm.addEventListener('submit',e=>{e.preventDefault();data.businesses.unshift({name:businessName.value,category:businessCategory.value,address:businessAddress.value,heart:businessHeart.value,status:businessStatus.value,description:businessDescription.value});e.target.reset();save();toast('Business saved')});
+eventForm.addEventListener('submit',e=>{e.preventDefault();data.events.unshift({title:eventTitle.value,date:eventDate.value,location:eventLocation.value,status:eventStatus.value,description:eventDescription.value});e.target.reset();save();toast('Event saved')});
+applicationForm.addEventListener('submit',e=>{e.preventDefault();data.applications.unshift({type:applicationType.value,status:applicationStatus.value,name:applicationName.value,email:applicationEmail.value,notes:applicationNotes.value});e.target.reset();save();toast('Application saved')});
+announcementForm.addEventListener('submit',e=>{e.preventDefault();data.announcements.unshift({title:announcementTitle.value,status:announcementStatus.value,window:announcementWindow.value,priority:announcementPriority.value,message:announcementMessage.value});e.target.reset();save();toast('Announcement saved')});
+personForm.addEventListener('submit',e=>{e.preventDefault();data.people.unshift({name:personName.value,role:personRole.value,assignment:personAssignment.value,status:personStatus.value,notes:personNotes.value});e.target.reset();save();toast('Person saved')});
+dateLine.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+renderAll();route(location.hash||'#dashboard');
 </script>
 </body>
 </html>
