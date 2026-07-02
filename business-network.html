@@ -57,8 +57,9 @@
       <p class="eyebrow">Join the Network</p>
       <h2>Apply to be part of the Heartland Pride Center Affirming Business Network.</h2>
       <p class="form-note">Applications are reviewed before a business appears publicly. Published businesses may appear in the directory, Land of Hearts map, and future featured business displays.</p>
-      <form class="form-grid" id="businessApplicationForm" name="affirming-business-application" method="POST" data-netlify="true">
+      <form class="form-grid" id="businessApplicationForm" name="affirming-business-application" method="POST" data-netlify="true" netlify-honeypot="bot-field">
         <input type="hidden" name="form-name" value="affirming-business-application">
+        <p style="display:none"><label>Do not fill this out: <input name="bot-field"></label></p>
         <div class="form-field"><label for="appBusinessName">Business Name</label><input id="appBusinessName" name="businessName" required></div>
         <div class="form-field"><label for="appCategory">Category</label><input id="appCategory" name="category" placeholder="Restaurant, salon, clinic, retail..."></div>
         <div class="form-field"><label for="appContactName">Contact Name</label><input id="appContactName" name="contactName"></div>
@@ -77,6 +78,15 @@
   <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="contact.html">Contact</a></div></footer>
   <script src="script.js"></script>
   <script>
+    const nav = document.querySelector('.nav-links');
+    if (nav && !nav.querySelector('a[href="business-network.html"]')) {
+      const donate = nav.querySelector('a[href="support.html"]');
+      const link = document.createElement('a');
+      link.href = 'business-network.html';
+      link.textContent = 'Business Network';
+      nav.insertBefore(link, donate || nav.children[4] || null);
+    }
+
     const storeKey = 'hpcBackstageDataV1';
     const defaultData = { businesses: [], events: [], applications: [], announcements: [], people: [] };
     function readData(){
@@ -84,6 +94,7 @@
       catch(e){ return {...defaultData}; }
     }
     function writeData(data){ localStorage.setItem(storeKey, JSON.stringify(data)); }
+    function encodeFormData(formData){ return new URLSearchParams(formData).toString(); }
     function seedIfEmpty(){
       const data = readData();
       if (!data.businesses || !data.businesses.length) {
@@ -93,7 +104,6 @@
         writeData(data);
       }
     }
-    function statusClass(status){ return String(status || 'Draft').toLowerCase(); }
     function publishedBusinesses(){ return (readData().businesses || []).filter(b => b.status === 'Published'); }
     function businessCard(b){
       const link = b.website ? `<a class="btn secondary" href="${b.website}" target="_blank" rel="noopener">Visit Website</a>` : '';
@@ -101,7 +111,6 @@
     }
     function renderDirectory(){
       const search = (document.getElementById('businessSearch')?.value || '').toLowerCase();
-      const category = document.getElementById('categoryFilter')?.value || 'all';
       const businesses = publishedBusinesses();
       const categories = [...new Set(businesses.map(b => b.category).filter(Boolean))].sort();
       const filter = document.getElementById('categoryFilter');
@@ -121,8 +130,14 @@
     renderDirectory();
     businessSearch.addEventListener('input', renderDirectory);
     categoryFilter.addEventListener('change', renderDirectory);
-    businessApplicationForm.addEventListener('submit', function(e){
+    businessApplicationForm.addEventListener('submit', async function(e){
       e.preventDefault();
+      const formData = new FormData(businessApplicationForm);
+      try {
+        await fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: encodeFormData(formData) });
+      } catch(error) {
+        console.warn('Hosted form capture did not complete in this browser session.', error);
+      }
       const data = readData();
       data.businesses = data.businesses || [];
       data.applications = data.applications || [];
