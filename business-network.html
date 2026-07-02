@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Affirming Business Network | Heartland Pride Center</title>
+  <meta name="description" content="Explore and join Heartland Pride Center's Affirming Business Network, a growing Land of Hearts map of affirming businesses and allies across Polk County and Florida's Heartland." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="pages.css" />
+</head>
+<body>
+  <header class="site-header" id="top">
+    <a class="brand" href="index.html" aria-label="Heartland Pride Center home"><img src="logo.png" alt="Heartland Pride Center logo"><span><strong>Heartland</strong><em>Pride Center</em></span></a>
+    <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+    <nav class="nav-links" aria-label="Primary navigation"><a href="index.html">Home</a><a href="about.html">About</a><a href="programs.html">Programs</a><a href="resources.html">Resources</a><a href="business-network.html">Business Network</a><a href="partners.html">Partners</a><a href="volunteer.html">Get Involved</a><a href="contact.html">Contact</a></nav>
+  </header>
+
+  <main class="page-main business-network-page">
+    <section class="page-hero land-hero">
+      <p class="eyebrow">Affirming Business Network</p>
+      <h1>The Land of Hearts starts here.</h1>
+      <p class="intro">Heartland Pride Center's Affirming Business Network helps LGBTQ+ people, families, allies, and visitors find local businesses that choose visibility, welcome, and community connection in Polk County and Florida's Heartland.</p>
+      <div class="actions"><a class="btn primary" href="#join-network">Join the Network</a><a class="btn secondary" href="#land-map">Explore the Map</a></div>
+    </section>
+
+    <section class="land-stage" id="land-map" aria-label="Land of Hearts map and business directory">
+      <div class="stage-copy">
+        <p class="eyebrow">Land of Hearts</p>
+        <h2>A growing map of affirming places.</h2>
+        <p>Each published business becomes part of the public network after review. The map below is designed to grow from the first few affirming businesses into a living community layer across the Heartland.</p>
+        <div class="network-stats">
+          <div><strong id="publicBusinessCount">0</strong><span>Published businesses</span></div>
+          <div><strong id="publicCategoryCount">0</strong><span>Categories represented</span></div>
+          <div><strong id="featuredCount">0</strong><span>Featured hearts</span></div>
+        </div>
+      </div>
+      <div class="heart-map" aria-label="Decorative Land of Hearts map preview">
+        <div class="map-glow"></div>
+        <div class="heart-pin pin-one">♥</div>
+        <div class="heart-pin pin-two">♥</div>
+        <div class="heart-pin pin-three">♥</div>
+        <div class="map-label"><strong>Polk County</strong><span>Affirming places appearing as hearts</span></div>
+      </div>
+    </section>
+
+    <section class="directory-tools" aria-label="Business directory filters">
+      <div class="form-field"><label for="businessSearch">Search the network</label><input id="businessSearch" placeholder="Search by name, category, city, or service"></div>
+      <div class="form-field"><label for="categoryFilter">Category</label><select id="categoryFilter"><option value="all">All categories</option></select></div>
+    </section>
+
+    <section class="business-directory" id="businessDirectory" aria-live="polite"></section>
+
+    <section class="intake-form" id="join-network" aria-label="Affirming Business Network application">
+      <p class="eyebrow">Join the Network</p>
+      <h2>Apply to be part of the Heartland Pride Center Affirming Business Network.</h2>
+      <p class="form-note">Applications are reviewed before a business appears publicly. Published businesses may appear in the directory, Land of Hearts map, and future featured business displays.</p>
+      <form class="form-grid" id="businessApplicationForm" name="affirming-business-application" method="POST" data-netlify="true">
+        <input type="hidden" name="form-name" value="affirming-business-application">
+        <div class="form-field"><label for="appBusinessName">Business Name</label><input id="appBusinessName" name="businessName" required></div>
+        <div class="form-field"><label for="appCategory">Category</label><input id="appCategory" name="category" placeholder="Restaurant, salon, clinic, retail..."></div>
+        <div class="form-field"><label for="appContactName">Contact Name</label><input id="appContactName" name="contactName"></div>
+        <div class="form-field"><label for="appEmail">Email</label><input id="appEmail" name="email" type="email"></div>
+        <div class="form-field"><label for="appPhone">Phone</label><input id="appPhone" name="phone"></div>
+        <div class="form-field"><label for="appWebsite">Website / Social Link</label><input id="appWebsite" name="website" placeholder="https://"></div>
+        <div class="form-field full"><label for="appAddress">Business Address</label><input id="appAddress" name="address" placeholder="Street, city, state"></div>
+        <div class="form-field full"><label for="appDescription">Tell us about your business</label><textarea id="appDescription" name="description" placeholder="What should people know about your business, services, or affirming commitment?"></textarea></div>
+        <div class="form-field full"><label for="appNotes">Anything else HPC should know?</label><textarea id="appNotes" name="notes" placeholder="Accessibility notes, safe contact preference, sponsorship interest, questions, etc."></textarea></div>
+        <div class="form-actions"><button class="btn primary" type="submit">Submit Application</button><p class="privacy-line">Your submission will be reviewed before anything appears publicly.</p></div>
+      </form>
+      <div class="directory-note" id="applicationMessage" style="display:none"></div>
+    </section>
+  </main>
+
+  <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="contact.html">Contact</a></div></footer>
+  <script src="script.js"></script>
+  <script>
+    const storeKey = 'hpcBackstageDataV1';
+    const defaultData = { businesses: [], events: [], applications: [], announcements: [], people: [] };
+    function readData(){
+      try { return Object.assign({}, defaultData, JSON.parse(localStorage.getItem(storeKey) || '{}')); }
+      catch(e){ return {...defaultData}; }
+    }
+    function writeData(data){ localStorage.setItem(storeKey, JSON.stringify(data)); }
+    function seedIfEmpty(){
+      const data = readData();
+      if (!data.businesses || !data.businesses.length) {
+        data.businesses = [
+          {name:'Heartland Community Ally',category:'Community Partner',address:'Polk County, FL',heart:'Gold Heart',status:'Published',description:'Sample published listing. Replace this with approved affirming businesses as applications come in.',featured:true,website:'',phone:'',email:''}
+        ];
+        writeData(data);
+      }
+    }
+    function statusClass(status){ return String(status || 'Draft').toLowerCase(); }
+    function publishedBusinesses(){ return (readData().businesses || []).filter(b => b.status === 'Published'); }
+    function businessCard(b){
+      const link = b.website ? `<a class="btn secondary" href="${b.website}" target="_blank" rel="noopener">Visit Website</a>` : '';
+      return `<article class="business-card"><div><small>${b.category || 'Local Business'} · ${b.heart || 'Community Heart'}</small><h3>${b.name}</h3><p>${b.description || 'Affirming business listing.'}</p><p class="business-address">${b.address || 'Polk County, Florida'}</p><span class="heart-badge">♥ ${b.status}</span></div><div class="business-actions">${link}</div></article>`;
+    }
+    function renderDirectory(){
+      const search = (document.getElementById('businessSearch')?.value || '').toLowerCase();
+      const category = document.getElementById('categoryFilter')?.value || 'all';
+      const businesses = publishedBusinesses();
+      const categories = [...new Set(businesses.map(b => b.category).filter(Boolean))].sort();
+      const filter = document.getElementById('categoryFilter');
+      const current = filter.value || 'all';
+      filter.innerHTML = '<option value="all">All categories</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      filter.value = categories.includes(current) ? current : 'all';
+      const filtered = businesses.filter(b => {
+        const text = [b.name,b.category,b.address,b.description,b.heart].join(' ').toLowerCase();
+        return (!search || text.includes(search)) && (filter.value === 'all' || b.category === filter.value);
+      });
+      publicBusinessCount.textContent = businesses.length;
+      publicCategoryCount.textContent = categories.length;
+      featuredCount.textContent = businesses.filter(b => b.featured || b.heart === 'Gold Heart').length;
+      businessDirectory.innerHTML = filtered.length ? filtered.map(businessCard).join('') : '<div class="directory-note"><strong>No published businesses match yet.</strong><p>Approved businesses will appear here after Backstage review.</p></div>';
+    }
+    seedIfEmpty();
+    renderDirectory();
+    businessSearch.addEventListener('input', renderDirectory);
+    categoryFilter.addEventListener('change', renderDirectory);
+    businessApplicationForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      const data = readData();
+      data.businesses = data.businesses || [];
+      data.applications = data.applications || [];
+      const business = {
+        name: appBusinessName.value.trim(),
+        category: appCategory.value.trim() || 'Local Business',
+        address: appAddress.value.trim(),
+        contactName: appContactName.value.trim(),
+        email: appEmail.value.trim(),
+        phone: appPhone.value.trim(),
+        website: appWebsite.value.trim(),
+        description: appDescription.value.trim(),
+        notes: appNotes.value.trim(),
+        heart: 'Pending Heart',
+        status: 'Pending',
+        featured: false,
+        submittedAt: new Date().toISOString()
+      };
+      data.businesses.unshift(business);
+      data.applications.unshift({type:'Business Network',name:business.name,email:business.email,status:'Pending',notes:'Business Network application submitted from public Land of Hearts page.',submittedAt:business.submittedAt});
+      writeData(data);
+      businessApplicationForm.reset();
+      applicationMessage.style.display = 'block';
+      applicationMessage.innerHTML = '<strong>Application received.</strong><p>Your business has been submitted for Heartland Pride Center review. It will not appear publicly until approved.</p>';
+      renderDirectory();
+    });
+  </script>
+</body>
+</html>
