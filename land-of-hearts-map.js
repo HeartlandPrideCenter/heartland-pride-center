@@ -3,6 +3,21 @@ window.HPC_LAND_OF_HEARTS_MAP = {
     const mapEl = document.getElementById('lohMap');
     if (!mapEl) return null;
 
+    mapEl.style.display = 'block';
+    mapEl.style.width = '100%';
+    mapEl.style.minHeight = '520px';
+    mapEl.style.height = '520px';
+
+    const wrap = mapEl.closest('.loh-map-wrap');
+    if (wrap) {
+      wrap.style.display = 'block';
+      wrap.style.width = '100%';
+      wrap.style.minHeight = '520px';
+      wrap.style.height = '520px';
+      wrap.style.position = 'relative';
+      wrap.style.zIndex = '1';
+    }
+
     if (!window.L) {
       mapEl.innerHTML = '<div class="loh-map-fallback"><strong>❤️ Land of Hearts Map</strong><p>The interactive map engine did not load. Published businesses are still listed below.</p></div>';
       return { render() {} };
@@ -16,14 +31,8 @@ window.HPC_LAND_OF_HEARTS_MAP = {
 
     const layer = L.layerGroup().addTo(map);
     const fallback = [
-      [27.9014, -81.5859],
-      [28.0395, -81.9498],
-      [27.9659, -81.9734],
-      [27.8964, -81.8431],
-      [28.1142, -81.6179],
-      [27.7523, -81.8017],
-      [28.1558, -81.5326],
-      [27.8397, -81.5415]
+      [27.9014, -81.5859], [28.0395, -81.9498], [27.9659, -81.9734], [27.8964, -81.8431],
+      [28.1142, -81.6179], [27.7523, -81.8017], [28.1558, -81.5326], [27.8397, -81.5415]
     ];
 
     const badgeIcon = { lgbtq_owned: '🏳️‍🌈', proud_ally: '🤝', accessible: '♿' };
@@ -65,7 +74,8 @@ window.HPC_LAND_OF_HEARTS_MAP = {
       });
       if (points.length) map.fitBounds(points, { padding: [45, 45], maxZoom: 12 });
       else map.setView([27.90, -81.60], 9);
-      setTimeout(() => map.invalidateSize(), 350);
+      setTimeout(() => map.invalidateSize(), 250);
+      setTimeout(() => map.invalidateSize(), 900);
     }
 
     render(businesses || []);
