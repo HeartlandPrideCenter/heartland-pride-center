@@ -52,18 +52,16 @@
       <p class="eyebrow">Join the Network</p>
       <h2>Apply to be part of the Heartland Pride Center Affirming Business Network.</h2>
       <p class="form-note">Applications are reviewed before a business appears publicly. Published businesses may appear in the directory, Land of Hearts map, and future featured business displays.</p>
-      <form class="form-grid" id="businessApplicationForm" name="affirming-business-application" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="affirming-business-application">
-        <p style="display:none"><label>Do not fill this out: <input name="bot-field"></label></p>
-        <div class="form-field"><label for="appBusinessName">Business Name</label><input id="appBusinessName" name="businessName" required></div>
-        <div class="form-field"><label for="appCategory">Category</label><input id="appCategory" name="category" placeholder="Restaurant, salon, clinic, retail..."></div>
-        <div class="form-field"><label for="appContactName">Contact Name</label><input id="appContactName" name="contactName"></div>
-        <div class="form-field"><label for="appEmail">Email</label><input id="appEmail" name="email" type="email"></div>
-        <div class="form-field"><label for="appPhone">Phone</label><input id="appPhone" name="phone"></div>
-        <div class="form-field"><label for="appWebsite">Website / Social Link</label><input id="appWebsite" name="website" placeholder="https://"></div>
-        <div class="form-field full"><label for="appAddress">Business Address</label><input id="appAddress" name="address" placeholder="Street, city, state"></div>
-        <div class="form-field full"><label for="appDescription">Tell us about your business</label><textarea id="appDescription" name="description" placeholder="What should people know about your business, services, or affirming commitment?"></textarea></div>
-        <div class="form-field full"><label for="appNotes">Anything else HPC should know?</label><textarea id="appNotes" name="notes" placeholder="Accessibility notes, safe contact preference, sponsorship interest, questions, etc."></textarea></div>
+      <form class="form-grid" id="businessApplicationForm">
+        <div class="form-field"><label for="appBusinessName">Business Name</label><input id="appBusinessName" required></div>
+        <div class="form-field"><label for="appCategory">Category</label><input id="appCategory" placeholder="Restaurant, salon, clinic, retail..."></div>
+        <div class="form-field"><label for="appContactName">Contact Name</label><input id="appContactName"></div>
+        <div class="form-field"><label for="appEmail">Email</label><input id="appEmail" type="email"></div>
+        <div class="form-field"><label for="appPhone">Phone</label><input id="appPhone"></div>
+        <div class="form-field"><label for="appWebsite">Website / Social Link</label><input id="appWebsite" placeholder="https://"></div>
+        <div class="form-field full"><label for="appAddress">Business Address</label><input id="appAddress" placeholder="Street, city, state"></div>
+        <div class="form-field full"><label for="appDescription">Tell us about your business</label><textarea id="appDescription" placeholder="What should people know about your business, services, or affirming commitment?"></textarea></div>
+        <div class="form-field full"><label for="appNotes">Anything else HPC should know?</label><textarea id="appNotes" placeholder="Accessibility notes, safe contact preference, sponsorship interest, questions, etc."></textarea></div>
         <div class="form-actions"><button class="btn primary" type="submit">Submit Application</button><p class="privacy-line">Your submission will be reviewed before anything appears publicly.</p></div>
       </form>
       <div class="directory-note" id="applicationMessage" style="display:none"></div>
@@ -72,90 +70,95 @@
 
   <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="contact.html">Contact</a></div></footer>
   <script src="script.js"></script>
+  <script src="hpc-data-source.js"></script>
   <script>
-    const nav = document.querySelector('.nav-links');
-    if (nav && !nav.querySelector('a[href="business-network.html"]')) {
-      const donate = nav.querySelector('a[href="support.html"]');
-      const link = document.createElement('a');
-      link.href = 'business-network.html';
-      link.textContent = 'Business Network';
-      nav.insertBefore(link, donate || nav.children[4] || null);
+    const hpcApiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
+    const hpcApiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
+    const hpcReady = Boolean(hpcApiBase && hpcApiKey && !hpcApiKey.includes('ADD_PUBLIC_TOKEN'));
+    let businesses = [];
+
+    function hpcHeaders(extra = {}) {
+      return Object.assign({ apikey: hpcApiKey, Authorization: 'Bearer ' + hpcApiKey, 'Content-Type': 'application/json' }, extra);
     }
 
-    const storeKey = 'hpcBackstageDataV1';
-    const defaultData = { businesses: [], events: [], applications: [], announcements: [], people: [] };
-    function readData(){
-      try { return Object.assign({}, defaultData, JSON.parse(localStorage.getItem(storeKey) || '{}')); }
-      catch(e){ return {...defaultData}; }
+    function normalizeWebsite(url) {
+      if (!url) return '';
+      return /^https?:\/\//i.test(url) ? url : 'https://' + url;
     }
-    function writeData(data){ localStorage.setItem(storeKey, JSON.stringify(data)); }
-    function encodeFormData(formData){ return new URLSearchParams(formData).toString(); }
-    function seedIfEmpty(){
-      const data = readData();
-      if (!data.businesses || !data.businesses.length) {
-        data.businesses = [
-          {name:'Heartland Community Ally',category:'Community Partner',address:'Polk County, FL',heart:'Gold Heart',status:'Published',description:'Sample published listing. Replace this with approved affirming businesses as applications come in.',featured:true,website:'',phone:'',email:''}
-        ];
-        writeData(data);
-      }
-    }
-    function publishedBusinesses(){ return (readData().businesses || []).filter(b => b.status === 'Published'); }
+
     function businessCard(b){
-      const link = b.website ? `<a class="btn secondary" href="${b.website}" target="_blank" rel="noopener">Visit Website</a>` : '';
-      return `<article class="business-card"><div><small>${b.category || 'Local Business'} · ${b.heart || 'Community Heart'}</small><h3>${b.name}</h3><p>${b.description || 'Affirming business listing.'}</p><p class="business-address">${b.address || 'Polk County, Florida'}</p><span class="heart-badge">♥ ${b.heart || 'Community Heart'}</span></div><div class="business-actions">${link}</div></article>`;
+      const website = b.website ? `<a class="btn secondary" href="${normalizeWebsite(b.website)}" target="_blank" rel="noopener">Visit Website</a>` : '';
+      const place = [b.address, b.city, b.county ? b.county + ' County' : ''].filter(Boolean).join(' · ');
+      return `<article class="business-card"><div><small>${b.category || 'Local Business'} · ${b.heart_rating || 'Community Heart'}</small><h3>${b.name}</h3><p>${b.description || 'Affirming business listing.'}</p><p class="business-address">${place || 'Polk County, Florida'}</p><span class="heart-badge">♥ ${b.heart_rating || 'Community Heart'}</span></div><div class="business-actions">${website}</div></article>`;
     }
+
     function renderDirectory(){
-      const search = (document.getElementById('businessSearch')?.value || '').toLowerCase();
-      const businesses = publishedBusinesses();
+      const search = (businessSearch.value || '').toLowerCase();
       const categories = [...new Set(businesses.map(b => b.category).filter(Boolean))].sort();
-      const filter = document.getElementById('categoryFilter');
-      const current = filter.value || 'all';
-      filter.innerHTML = '<option value="all">All categories</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
-      filter.value = categories.includes(current) ? current : 'all';
+      const current = categoryFilter.value || 'all';
+      categoryFilter.innerHTML = '<option value="all">All categories</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      categoryFilter.value = categories.includes(current) ? current : 'all';
       const filtered = businesses.filter(b => {
-        const text = [b.name,b.category,b.address,b.description,b.heart].join(' ').toLowerCase();
-        return (!search || text.includes(search)) && (filter.value === 'all' || b.category === filter.value);
+        const text = [b.name,b.category,b.address,b.city,b.county,b.description,b.heart_rating].join(' ').toLowerCase();
+        return (!search || text.includes(search)) && (categoryFilter.value === 'all' || b.category === categoryFilter.value);
       });
       businessDirectory.innerHTML = filtered.length ? filtered.map(businessCard).join('') : '<div class="directory-note"><strong>No published businesses yet.</strong><p>Approved businesses will appear here after Backstage review.</p></div>';
     }
-    seedIfEmpty();
-    renderDirectory();
+
+    async function loadBusinesses(){
+      if (!hpcReady) {
+        businessDirectory.innerHTML = '<div class="directory-note"><strong>Land of Hearts is almost connected.</strong><p>The public data setting still needs to be completed.</p></div>';
+        return;
+      }
+      businessDirectory.innerHTML = '<div class="directory-note"><strong>Loading Land of Hearts...</strong><p>Checking published businesses.</p></div>';
+      try {
+        const res = await fetch(hpcApiBase + '/businesses?select=*&status=eq.published&order=created_at.desc', { headers: hpcHeaders() });
+        if (!res.ok) throw new Error('Business load failed');
+        businesses = await res.json();
+        renderDirectory();
+      } catch (error) {
+        console.error(error);
+        businessDirectory.innerHTML = '<div class="directory-note"><strong>Unable to load businesses.</strong><p>Please try again soon.</p></div>';
+      }
+    }
+
     businessSearch.addEventListener('input', renderDirectory);
     categoryFilter.addEventListener('change', renderDirectory);
+
     businessApplicationForm.addEventListener('submit', async function(e){
       e.preventDefault();
-      const formData = new FormData(businessApplicationForm);
-      try {
-        await fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: encodeFormData(formData) });
-      } catch(error) {
-        console.warn('Hosted form capture did not complete in this browser session.', error);
+      applicationMessage.style.display = 'block';
+      if (!hpcReady) {
+        applicationMessage.innerHTML = '<strong>Connection not finished.</strong><p>The public data setting still needs to be completed before applications can be received.</p>';
+        return;
       }
-      const data = readData();
-      data.businesses = data.businesses || [];
-      data.applications = data.applications || [];
-      const business = {
-        name: appBusinessName.value.trim(),
-        category: appCategory.value.trim() || 'Local Business',
-        address: appAddress.value.trim(),
-        contactName: appContactName.value.trim(),
+      applicationMessage.innerHTML = '<strong>Submitting...</strong><p>Sending your application to Heartland Pride Center.</p>';
+      const payload = {
+        type: 'business',
+        status: 'pending',
+        organization_name: appBusinessName.value.trim(),
+        contact_name: appContactName.value.trim(),
         email: appEmail.value.trim(),
         phone: appPhone.value.trim(),
         website: appWebsite.value.trim(),
+        category: appCategory.value.trim() || 'Local Business',
+        address: appAddress.value.trim(),
+        county: 'Polk',
         description: appDescription.value.trim(),
-        notes: appNotes.value.trim(),
-        heart: 'Pending Heart',
-        status: 'Pending',
-        featured: false,
-        submittedAt: new Date().toISOString()
+        notes: appNotes.value.trim()
       };
-      data.businesses.unshift(business);
-      data.applications.unshift({type:'Business Network',name:business.name,email:business.email,status:'Pending',notes:'Business Network application submitted from public Land of Hearts page.',submittedAt:business.submittedAt});
-      writeData(data);
-      businessApplicationForm.reset();
-      applicationMessage.style.display = 'block';
-      applicationMessage.innerHTML = '<strong>Application received.</strong><p>Your business has been submitted for Heartland Pride Center review. It will not appear publicly until approved.</p>';
-      renderDirectory();
+      try {
+        const res = await fetch(hpcApiBase + '/applications', { method: 'POST', headers: hpcHeaders({ Prefer: 'return=minimal' }), body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error('Application insert failed');
+        businessApplicationForm.reset();
+        applicationMessage.innerHTML = '<strong>Application received.</strong><p>Your business has been submitted for Heartland Pride Center review. It will not appear publicly until approved.</p>';
+      } catch (error) {
+        console.error(error);
+        applicationMessage.innerHTML = '<strong>Submission issue.</strong><p>Your application could not be sent yet. Please try again or contact info@heartlandpridecenter.org.</p>';
+      }
     });
+
+    loadBusinesses();
   </script>
 </body>
 </html>
