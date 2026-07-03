@@ -2,24 +2,22 @@ window.HPC_DATA_URL = 'https://xrunawtqotumbsztboxo.supabase.co';
 window.HPC_DATA_PUBLIC_TOKEN = 'sb_publishable_UyoqGKapp6Da2CNE4qqlZA_BodqSra8';
 
 if (window.location.pathname.includes('staff')) {
-  window.addEventListener('load', () => {
-    const coordinateScript = document.createElement('script');
-    coordinateScript.src = 'backstage-business-coordinates.js';
-    coordinateScript.onload = () => {
-      const overrideScript = document.createElement('script');
-      overrideScript.src = 'backstage-business-network-overrides.js';
-      overrideScript.onload = () => {
-        const editorScript = document.createElement('script');
-        editorScript.src = 'backstage-business-editor.js';
-        editorScript.onload = () => {
-          const workflowScript = document.createElement('script');
-          workflowScript.src = 'backstage-business-workflow-v2.js';
-          document.body.appendChild(workflowScript);
-        };
-        document.body.appendChild(editorScript);
-      };
-      document.body.appendChild(overrideScript);
-    };
-    document.body.appendChild(coordinateScript);
-  });
+  const version = 'v2-20260703-2';
+  const scripts = [
+    'backstage-business-coordinates.js',
+    'backstage-business-network-overrides.js',
+    'backstage-business-editor.js',
+    'backstage-business-workflow-v2.js'
+  ];
+
+  function loadBackstageScript(index = 0) {
+    if (index >= scripts.length) return;
+    const script = document.createElement('script');
+    script.src = scripts[index] + '?v=' + version;
+    script.onload = () => loadBackstageScript(index + 1);
+    script.onerror = () => console.error('Backstage script failed to load:', scripts[index]);
+    document.head.appendChild(script);
+  }
+
+  loadBackstageScript();
 }
