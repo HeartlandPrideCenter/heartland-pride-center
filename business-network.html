@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="pages.css" />
   <style>
@@ -16,11 +17,12 @@
     .loh-form-title h3{margin:0 0 8px;color:var(--gold-light);font-size:.85rem;letter-spacing:.14em;text-transform:uppercase}.loh-form-title p{margin:0;color:rgba(245,241,232,.68);line-height:1.65}
     .loh-badges{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.loh-badge{display:flex;align-items:flex-start;gap:12px;border:1px solid rgba(245,241,232,.16);border-radius:18px;background:rgba(5,18,32,.5);padding:16px;cursor:pointer}.loh-badge input{width:auto;margin-top:4px}.loh-badge b{display:block}.loh-badge span span{display:block;color:rgba(245,241,232,.64);font-size:.84rem;line-height:1.35}.loh-icon{font-size:1.35rem;line-height:1}
     .loh-consent{grid-column:1/-1;display:flex;align-items:flex-start;gap:12px;border:1px solid rgba(239,205,114,.3);border-radius:20px;background:rgba(212,175,55,.08);padding:20px;color:rgba(245,241,232,.88);line-height:1.62}.loh-consent input{width:auto;margin-top:5px}.loh-note{grid-column:1/-1;color:rgba(245,241,232,.62);font-size:.88rem;line-height:1.6}.loh-card-icons{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.loh-card-icons span{border:1px solid rgba(239,205,114,.22);border-radius:999px;padding:7px 10px;background:rgba(212,175,55,.08)}
-    @media(max-width:760px){.loh-badges{grid-template-columns:1fr}.loh-consent{display:block}.loh-consent input{margin:0 0 10px}}
+    .loh-map-wrap{height:500px;border-radius:34px;overflow:hidden;border:1px solid rgba(239,205,114,.25);box-shadow:0 24px 80px rgba(0,0,0,.24);background:#0b1d30}.loh-map{height:100%;width:100%;z-index:1}.loh-heart-marker{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#f7d66b,#d4af37);border:2px solid rgba(255,255,255,.75);box-shadow:0 12px 24px rgba(0,0,0,.28);font-size:22px}.leaflet-popup-content-wrapper{border-radius:20px;background:#0b1d30;color:#f5f1e8;border:1px solid rgba(239,205,114,.25)}.leaflet-popup-tip{background:#0b1d30}.loh-popup h3{margin:0 0 8px}.loh-popup small{color:#f0ce73;font-weight:800;text-transform:uppercase}
+    @media(max-width:760px){.loh-badges{grid-template-columns:1fr}.loh-consent{display:block}.loh-consent input{margin:0 0 10px}.loh-map-wrap{height:430px}}
   </style>
 </head>
 <body>
-  <span class="loh-version">Land of Hearts Rebuild 2026-07-03</span>
+  <span class="loh-version">Land of Hearts Map Module 2026-07-03</span>
   <header class="site-header" id="top">
     <a class="brand" href="index.html" aria-label="Heartland Pride Center home"><img src="logo.png" alt="Heartland Pride Center logo"><span><strong>Heartland</strong><em>Pride Center</em></span></a>
     <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -36,8 +38,8 @@
     </section>
 
     <section class="land-stage" id="land-map" aria-label="Land of Hearts map and directory">
-      <div class="stage-copy"><p class="eyebrow">Land of Hearts</p><h2>Find affirming places across the Heartland.</h2><p>Each approved business becomes a heart on the public network. The live interactive map is coming next. For now, published businesses appear in the directory below.</p></div>
-      <div class="heart-map" aria-label="Land of Hearts preview"><div class="map-glow"></div><div class="heart-pin pin-one">♥</div><div class="heart-pin pin-two">♥</div><div class="heart-pin pin-three">♥</div><div class="map-label"><strong>Polk County</strong><span>Affirming places appearing as hearts</span></div></div>
+      <div class="stage-copy"><p class="eyebrow">Land of Hearts</p><h2>Find affirming places across the Heartland.</h2><p>Each approved business becomes a heart on the public network. Search the directory or explore the map to find welcoming places nearby.</p></div>
+      <div class="loh-map-wrap"><div class="loh-map" id="lohMap" aria-label="Interactive Land of Hearts map"></div></div>
     </section>
 
     <section class="directory-tools" aria-label="Business directory filters">
@@ -58,26 +60,21 @@
         <div class="form-field full"><label for="lohAddress">Business Address *</label><input id="lohAddress" required autocomplete="street-address" placeholder="Street address"></div>
         <div class="form-field"><label for="lohCity">City *</label><input id="lohCity" required autocomplete="address-level2" placeholder="Lake Wales"></div>
         <div class="form-field"><label for="lohWebsite">Website / Social Link</label><input id="lohWebsite" inputmode="url" placeholder="heartlandpridecenter.org"></div>
-
         <div class="loh-form-title"><h3>Contact Information</h3></div>
         <div class="form-field"><label for="lohContactName">Primary Contact *</label><input id="lohContactName" required autocomplete="name"></div>
         <div class="form-field"><label for="lohEmail">Email *</label><input id="lohEmail" required type="email" autocomplete="email" placeholder="name@example.com"></div>
         <div class="form-field"><label for="lohPhone">Phone *</label><input id="lohPhone" required inputmode="tel" autocomplete="tel" placeholder="(863) 555-1234"></div>
         <div class="form-field"><label for="lohPreferredContact">Preferred Contact</label><select id="lohPreferredContact"><option>Email</option><option>Phone</option></select></div>
-
         <div class="loh-form-title"><h3>Public Business Profile</h3><p>This description may appear on your public Land of Hearts profile if approved.</p></div>
         <div class="form-field full"><label for="lohPublicDescription">Public Description</label><textarea id="lohPublicDescription" maxlength="600" placeholder="Tell visitors what makes your business special, welcoming, or connected to the community."></textarea></div>
-
         <div class="loh-form-title"><h3>About Your Business</h3><p>Select all that apply. These will appear as simple icons after review.</p></div>
         <div class="loh-badges">
           <label class="loh-badge"><input type="checkbox" name="lohBadges" value="lgbtq_owned"><span class="loh-icon">🏳️‍🌈</span><span><b>LGBTQ+ Owned & Operated</b><span>Owned or operated by LGBTQ+ leadership.</span></span></label>
           <label class="loh-badge"><input type="checkbox" name="lohBadges" value="proud_ally"><span class="loh-icon">🤝</span><span><b>Proud Ally</b><span>Publicly supports LGBTQ+ inclusion.</span></span></label>
           <label class="loh-badge"><input type="checkbox" name="lohBadges" value="accessible"><span class="loh-icon">♿</span><span><b>Accessible</b><span>Wheelchair-accessible public access.</span></span></label>
         </div>
-
         <div class="loh-form-title"><h3>Private Notes</h3></div>
         <div class="form-field full"><label for="lohPrivateNotes">Anything HPC should know? Not published.</label><textarea id="lohPrivateNotes" placeholder="Questions, safe contact preference, sponsorship interest, or staff notes."></textarea></div>
-
         <label class="loh-consent"><input id="lohConsent" type="checkbox" required><span><strong>Certification & Consent *</strong><br>I certify that I am the owner of this business or an authorized representative acting on its behalf. I affirm that the information provided is accurate to the best of my knowledge. I understand that Heartland Pride Center reviews all applications prior to publication and may make minor edits for spelling, grammar, formatting, or clarity without changing the intended meaning. I consent to the publication of my approved business information on the Heartland Pride Center website, including the Land of Hearts map, the Affirming Business Network directory, and promotional materials related to the network.</span></label>
         <p class="loh-note">Heartland Pride Center reserves the right to approve, decline, suspend, or remove a listing at its discretion if it determines the listing no longer aligns with the mission, values, or standards of the Affirming Business Network.</p>
         <div class="form-actions"><button class="btn primary" type="submit">❤️ Join the Network</button><p class="privacy-line">A real person will review your application before anything appears publicly.</p></div>
@@ -89,21 +86,24 @@
   <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="contact.html">Contact</a></div></footer>
   <script src="script.js"></script>
   <script src="hpc-data-source.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="land-of-hearts-map.js"></script>
   <script>
     const apiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
     const apiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
     const ready = Boolean(apiBase && apiKey && !apiKey.includes('ADD_PUBLIC_TOKEN'));
     let businesses = [];
+    let landMap = null;
     const headers = (extra={}) => Object.assign({apikey:apiKey, Authorization:'Bearer '+apiKey, 'Content-Type':'application/json'}, extra);
     const normalizeWebsite = url => !url ? '' : (/^https?:\/\//i.test(url) ? url : 'https://' + url);
     const badgeMap = { lgbtq_owned:'🏳️‍🌈', proud_ally:'🤝', accessible:'♿' };
     function icons(badges){ const list = Array.isArray(badges) ? badges : []; return '<div class="loh-card-icons"><span>❤️</span>' + list.map(b=>`<span title="${b}">${badgeMap[b] || '❤️'}</span>`).join('') + '</div>'; }
     function card(b){ const desc=b.public_description||b.description||'Affirming business listing.'; const place=[b.address,b.city,b.county?b.county+' County':''].filter(Boolean).join(' · '); const website=b.website?`<a class="btn secondary" href="${normalizeWebsite(b.website)}" target="_blank" rel="noopener">Visit Website</a>`:''; return `<article class="business-card"><div><small>${b.category||'Local Business'} · ${b.heart_rating||'Community Heart'}</small><h3>${b.name}</h3><p>${desc}</p><p class="business-address">${place||'Polk County, Florida'}</p>${icons(b.badges)}</div><div class="business-actions">${website}</div></article>`; }
-    function render(){ const search=(businessSearch.value||'').toLowerCase(); const cats=[...new Set(businesses.map(b=>b.category).filter(Boolean))].sort(); const cur=categoryFilter.value||'all'; categoryFilter.innerHTML='<option value="all">All categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join(''); categoryFilter.value=cats.includes(cur)?cur:'all'; const filtered=businesses.filter(b=>{const text=[b.name,b.category,b.address,b.city,b.county,b.description,b.public_description,(b.badges||[]).join(' ')].join(' ').toLowerCase(); return (!search||text.includes(search))&&(categoryFilter.value==='all'||b.category===categoryFilter.value)}); businessDirectory.innerHTML=filtered.length?filtered.map(card).join(''):'<div class="directory-note"><strong>No published businesses yet.</strong><p>Approved businesses will appear here after Backstage review.</p></div>'; }
-    async function load(){ if(!ready){businessDirectory.innerHTML='<div class="directory-note"><strong>Land of Hearts is almost connected.</strong><p>The public data setting still needs to be completed.</p></div>'; return;} try{ const res=await fetch(apiBase+'/businesses?select=*&status=eq.published&order=created_at.desc',{headers:headers()}); if(!res.ok) throw new Error('load failed'); businesses=await res.json(); render(); }catch(e){ console.error(e); businessDirectory.innerHTML='<div class="directory-note"><strong>Unable to load businesses.</strong><p>Please try again soon.</p></div>'; } }
+    function render(){ const search=(businessSearch.value||'').toLowerCase(); const cats=[...new Set(businesses.map(b=>b.category).filter(Boolean))].sort(); const cur=categoryFilter.value||'all'; categoryFilter.innerHTML='<option value="all">All categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join(''); categoryFilter.value=cats.includes(cur)?cur:'all'; const filtered=businesses.filter(b=>{const text=[b.name,b.category,b.address,b.city,b.county,b.description,b.public_description,(b.badges||[]).join(' ')].join(' ').toLowerCase(); return (!search||text.includes(search))&&(categoryFilter.value==='all'||b.category===categoryFilter.value)}); businessDirectory.innerHTML=filtered.length?filtered.map(card).join(''):'<div class="directory-note"><strong>No published businesses yet.</strong><p>Approved businesses will appear here after Backstage review.</p></div>'; if(landMap) landMap.render(filtered); }
+    async function load(){ landMap = window.HPC_LAND_OF_HEARTS_MAP ? window.HPC_LAND_OF_HEARTS_MAP.init([]) : null; if(!ready){businessDirectory.innerHTML='<div class="directory-note"><strong>Land of Hearts is almost connected.</strong><p>The public data setting still needs to be completed.</p></div>'; return;} try{ const res=await fetch(apiBase+'/businesses?select=*&status=eq.published&order=created_at.desc',{headers:headers()}); if(!res.ok) throw new Error('load failed'); businesses=await res.json(); render(); }catch(e){ console.error(e); businessDirectory.innerHTML='<div class="directory-note"><strong>Unable to load businesses.</strong><p>Please try again soon.</p></div>'; } }
     businessSearch.addEventListener('input',render); categoryFilter.addEventListener('change',render);
     lohPhone.addEventListener('input',()=>{const n=lohPhone.value.replace(/\D/g,'').slice(0,10); lohPhone.value=n.length>6?`(${n.slice(0,3)}) ${n.slice(3,6)}-${n.slice(6)}`:n.length>3?`(${n.slice(0,3)}) ${n.slice(3)}`:n;});
-    landOfHeartsForm.addEventListener('submit',async e=>{ e.preventDefault(); applicationMessage.style.display='block'; if(!ready){applicationMessage.innerHTML='<strong>Connection not finished.</strong><p>The public data setting still needs to be completed before applications can be received.</p>';return;} const selected=[...document.querySelectorAll('input[name="lohBadges"]:checked')].map(x=>x.value); const privateSummary=[`Preferred contact: ${lohPreferredContact.value}`,`Selected badges: ${selected.join(', ')||'none'}`,`Private notes: ${lohPrivateNotes.value.trim()||'none'}`,'Consent: authorized representative certified accuracy and consented to publication if approved.'].join('\n'); const payload={type:'business',status:'pending',organization_name:lohBusinessName.value.trim(),contact_name:lohContactName.value.trim(),email:lohEmail.value.trim(),phone:lohPhone.value.trim(),website:normalizeWebsite(lohWebsite.value.trim()),category:lohCategory.value,address:lohAddress.value.trim(),city:lohCity.value.trim(),county:'Polk',description:lohPublicDescription.value.trim(),notes:privateSummary}; try{applicationMessage.innerHTML='<strong>Submitting...</strong><p>Sending your application to Heartland Pride Center.</p>'; const res=await fetch(apiBase+'/applications',{method:'POST',headers:headers({Prefer:'return=minimal'}),body:JSON.stringify(payload)}); if(!res.ok) throw new Error('insert failed'); landOfHeartsForm.reset(); applicationMessage.innerHTML='<strong>❤️ Application received.</strong><p>A member of Heartland Pride Center will review it shortly. If approved, your business will officially become part of the Land of Hearts.</p>'; }catch(err){console.error(err); applicationMessage.innerHTML='<strong>Submission issue.</strong><p>Your application could not be sent yet. Please try again or contact info@heartlandpridecenter.org.</p>';}});
+    landOfHeartsForm.addEventListener('submit',async e=>{ e.preventDefault(); applicationMessage.style.display='block'; if(!ready){applicationMessage.innerHTML='<strong>Connection not finished.</strong><p>The public data setting still needs to be completed before applications can be received.</p>';return;} const selected=[...document.querySelectorAll('input[name="lohBadges"]:checked')].map(x=>x.value); const privateSummary=[`Preferred contact: ${lohPreferredContact.value}`,`Selected badges: ${selected.join(', ')||'none'}`,`Private notes: ${lohPrivateNotes.value.trim()||'none'}`,'Consent: authorized representative certified accuracy and consented to publication if approved.'].join('\n'); const payload={type:'business',status:'pending',organization_name:lohBusinessName.value.trim(),contact_name:lohContactName.value.trim(),email:lohEmail.value.trim(),phone:lohPhone.value.trim(),website:normalizeWebsite(lohWebsite.value.trim()),category:lohCategory.value,address:lohAddress.value.trim(),city:lohCity.value.trim(),county:'Polk',description:lohPublicDescription.value.trim(),notes:privateSummary}; try{applicationMessage.innerHTML='<strong>Submitting...</strong><p>Sending your application to Heartland Pride Center.</p>'; const res=await fetch(apiBase+'/applications',{method:'POST',headers:headers({Prefer:'return:minimal'}),body:JSON.stringify(payload)}); if(!res.ok) throw new Error('insert failed'); landOfHeartsForm.reset(); applicationMessage.innerHTML='<strong>❤️ Application received.</strong><p>A member of Heartland Pride Center will review it shortly. If approved, your business will officially become part of the Land of Hearts.</p>'; }catch(err){console.error(err); applicationMessage.innerHTML='<strong>Submission issue.</strong><p>Your application could not be sent yet. Please try again or contact info@heartlandpridecenter.org.</p>';}});
     load();
   </script>
 </body>
