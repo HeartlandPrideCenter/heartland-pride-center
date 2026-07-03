@@ -8,6 +8,11 @@ if (window.location.pathname.includes('staff')) {
     coordinateScript.onload = () => {
       const overrideScript = document.createElement('script');
       overrideScript.src = 'backstage-business-network-overrides.js';
+      overrideScript.onload = () => {
+        const editorScript = document.createElement('script');
+        editorScript.src = 'backstage-business-editor.js';
+        document.body.appendChild(editorScript);
+      };
       document.body.appendChild(overrideScript);
     };
     document.body.appendChild(coordinateScript);
