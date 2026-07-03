@@ -11,6 +11,11 @@ if (window.location.pathname.includes('staff')) {
       overrideScript.onload = () => {
         const editorScript = document.createElement('script');
         editorScript.src = 'backstage-business-editor.js';
+        editorScript.onload = () => {
+          const workflowScript = document.createElement('script');
+          workflowScript.src = 'backstage-business-workflow-v2.js';
+          document.body.appendChild(workflowScript);
+        };
         document.body.appendChild(editorScript);
       };
       document.body.appendChild(overrideScript);
