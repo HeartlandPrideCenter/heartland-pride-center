@@ -8,8 +8,10 @@ if (window.location.pathname.includes('business-network')) {
 }
 
 if (window.location.pathname.includes('staff')) {
-  const version = 'v2-20260703-3';
+  const version = 'v2-20260704-1';
   const scripts = [
+    'heartland-os-version.js',
+    'heartland-os-collab-tools.js',
     'backstage-business-coordinates.js',
     'backstage-business-network-overrides.js',
     'backstage-business-editor.js',
