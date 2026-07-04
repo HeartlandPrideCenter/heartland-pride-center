@@ -10,6 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="staff-os.css" />
+  <style>
+    .network-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+    .mini-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+    .mini-metrics div{border:1px solid rgba(245,241,232,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:14px}
+    .mini-metrics strong{display:block;color:#f0ce73;font-size:1.55rem}
+    .mini-metrics span{display:block;color:rgba(245,241,232,.65);font-size:.72rem;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+    .record-card.featured{border-color:rgba(239,205,114,.45);background:rgba(212,175,55,.08)}
+    @media(max-width:900px){.mini-metrics{grid-template-columns:1fr 1fr}}
+  </style>
 </head>
 <body class="backstage-page">
   <section class="backstage-login" aria-label="Backstage login">
@@ -47,13 +56,14 @@
       <nav class="stage-nav" aria-label="Backstage navigation">
         <a class="active" href="#dashboard" data-section="dashboard">Dashboard</a>
         <a href="#businesses" data-section="businesses">Business Network</a>
-        <a href="#events" data-section="events">Events</a>
         <a href="#applications" data-section="applications">Applications</a>
+        <a href="#events" data-section="events">Events</a>
         <a href="#announcements" data-section="announcements">Announcements</a>
         <a href="#people" data-section="people">Volunteers & Staff</a>
       </nav>
       <div class="utility">
         <a href="index.html">Public Site</a>
+        <a href="business-network.html">Land of Hearts</a>
         <button type="button" id="signOut">Sign Out</button>
       </div>
     </aside>
@@ -63,16 +73,16 @@
         <div class="glance-grid">
           <div class="glance-pill"><strong>Pending Apps</strong><b id="glanceApps">0</b></div>
           <div class="glance-pill"><strong>Live Businesses</strong><b id="glanceBusinesses">0</b></div>
-          <div class="glance-pill"><strong>Upcoming Events</strong><b id="glanceEvents">0</b></div>
-          <div class="glance-pill"><strong>Live Announcements</strong><b id="glanceAnnouncements">0</b></div>
-          <div class="glance-pill"><strong>Active People</strong><b id="glancePeople">0</b></div>
+          <div class="glance-pill"><strong>Categories</strong><b id="glanceCategories">0</b></div>
+          <div class="glance-pill"><strong>Cities</strong><b id="glanceCities">0</b></div>
+          <div class="glance-pill"><strong>Hidden/Draft</strong><b id="glanceOffline">0</b></div>
         </div>
       </header>
 
       <div class="workspace">
         <section class="stage-section active" id="dashboard">
           <div class="stage-panel">
-            <div class="stage-head"><div><span class="eyeline">Dashboard</span><h1>Current stage status.</h1><p id="dateLine"></p></div></div>
+            <div class="stage-head"><div><span class="eyeline">Dashboard</span><h1>Business network command center.</h1><p id="dateLine"></p></div></div>
             <div class="stats">
               <div class="stage-stat"><strong>Needs Review</strong><b id="dashReview">0</b></div>
               <div class="stage-stat"><strong>Published</strong><b id="dashPublished">0</b></div>
@@ -89,24 +99,32 @@
         <section class="stage-section" id="businesses">
           <div class="stage-panel">
             <div class="stage-head"><div><span class="eyeline">Business Network</span><h1>Land of Hearts controls.</h1><p>Add, approve, feature, hide, or update businesses that appear on the public affirming business network.</p></div></div>
+            <div class="mini-metrics">
+              <div><strong id="metricTotalBusinesses">0</strong><span>Total</span></div>
+              <div><strong id="metricLiveBusinesses">0</strong><span>Published</span></div>
+              <div><strong id="metricCities">0</strong><span>Cities</span></div>
+              <div><strong id="metricCategories">0</strong><span>Categories</span></div>
+            </div>
+            <div class="network-actions"><a class="stage-btn" href="business-network.html" target="_blank" rel="noopener">View Public Network</a><a class="stage-btn" href="business-network.html#join-network" target="_blank" rel="noopener">Test Join Form</a></div>
             <div class="two-col">
               <form class="stage-card form-grid" id="businessForm">
                 <div class="field"><label>Business Name</label><input id="businessName" required></div>
                 <div class="field"><label>Category</label><input id="businessCategory" placeholder="Restaurant, salon, clinic..."></div>
                 <div class="field span"><label>Address</label><input id="businessAddress"></div>
                 <div class="field"><label>City</label><input id="businessCity" placeholder="Lake Wales"></div>
-                <div class="field"><label>Heart Rating</label><select id="businessHeart"><option>Gold Heart</option><option>Rainbow Heart</option><option>Community Heart</option></select></div>
+                <div class="field"><label>Commitment Level</label><select id="businessHeart"><option>Member Heart</option><option>Verified Heart</option><option>Community Supporter</option><option>Community Partner</option><option>Community Champion</option></select></div>
                 <div class="field"><label>Status</label><select id="businessStatus"><option value="draft">Draft</option><option value="published">Published</option><option value="hidden">Hidden</option></select></div>
+                <div class="field"><label>Phone</label><input id="businessPhone" inputmode="tel"></div>
+                <div class="field"><label>Email</label><input id="businessEmail" type="email"></div>
+                <div class="field span"><label>Website</label><input id="businessWebsite" inputmode="url" placeholder="https://example.com"></div>
                 <div class="field span"><label>Description</label><textarea id="businessDescription"></textarea></div>
                 <button class="stage-btn" type="submit">Save Business</button>
               </form>
-              <div class="drawer"><span class="eyeline">On Stage</span><h2>Public display</h2><p>Published businesses become public Land of Hearts listings. Draft and hidden records stay Backstage.</p></div>
+              <div class="drawer"><span class="eyeline">On Stage</span><h2>Public display</h2><p>Published businesses become public Land of Hearts listings. Draft and hidden records stay Backstage.</p><p>Use commitment levels for recognition, not popularity ratings.</p></div>
             </div>
             <div class="records" id="businessRecords"></div>
           </div>
         </section>
-
-        <section class="stage-section" id="events"><div class="stage-panel"><div class="stage-head"><div><span class="eyeline">Events</span><h1>Public event controls.</h1><p>Events will connect after the Business Network workflow is fully proven.</p></div></div><div class="records"><div class="record-card"><div><strong>Coming next.</strong><p>We are finishing the Business Network workflow first.</p></div></div></div></div></section>
 
         <section class="stage-section" id="applications">
           <div class="stage-panel">
@@ -115,6 +133,7 @@
           </div>
         </section>
 
+        <section class="stage-section" id="events"><div class="stage-panel"><div class="stage-head"><div><span class="eyeline">Events</span><h1>Public event controls.</h1><p>Events will connect after the Business Network workflow is fully proven.</p></div></div><div class="records"><div class="record-card"><div><strong>Coming next.</strong><p>We are finishing the Business Network workflow first.</p></div></div></div></div></section>
         <section class="stage-section" id="announcements"><div class="stage-panel"><div class="stage-head"><div><span class="eyeline">Announcements</span><h1>Homepage announcements.</h1><p>Announcement controls will connect after the Business Network workflow is complete.</p></div></div><div class="records"><div class="record-card"><div><strong>Coming next.</strong><p>This module is intentionally paused.</p></div></div></div></div></section>
         <section class="stage-section" id="people"><div class="stage-panel"><div class="stage-head"><div><span class="eyeline">Volunteers & Staff</span><h1>People and assignments.</h1><p>People controls will connect after the core application workflow is stable.</p></div></div><div class="records"><div class="record-card"><div><strong>Coming next.</strong><p>This module is intentionally paused.</p></div></div></div></div></section>
       </div>
@@ -139,6 +158,9 @@
     function statusLabel(status){ return String(status || 'draft').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase()); }
     function statusClass(status){ return String(status || 'draft').toLowerCase(); }
     function authedHeaders(extra={}){ return Object.assign({ apikey: apiKey, Authorization: 'Bearer ' + accessToken, 'Content-Type':'application/json' }, extra); }
+    function normalizeWebsite(url){ return !url ? '' : (/^https?:\/\//i.test(url) ? url : 'https://' + url); }
+    function setText(id,value){ const el=document.getElementById(id); if(el) el.textContent=value; }
+    function esc(v){ return String(v || '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
     function route(hash){ const id=(hash||'#dashboard').replace('#','')||'dashboard'; sections.forEach(s=>s.classList.remove('active')); (document.getElementById(id)||dashboard).classList.add('active'); stageLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===id)); sideStage.classList.remove('open'); window.scrollTo({top:0,behavior:'smooth'}); }
     function unlock(){ document.body.classList.add('logged'); route(location.hash||'#dashboard'); loadBackstage(); }
 
@@ -182,17 +204,15 @@
     function renderAll(){
       const pendingApps = applications.filter(a => a.status === 'pending').length;
       const liveBusinesses = businesses.filter(b => b.status === 'published').length;
-      glanceApps.textContent = pendingApps;
-      glanceBusinesses.textContent = liveBusinesses;
-      glanceEvents.textContent = 0;
-      glanceAnnouncements.textContent = 0;
-      glancePeople.textContent = 0;
-      dashReview.textContent = pendingApps;
-      dashPublished.textContent = liveBusinesses;
-      dashDrafts.textContent = businesses.filter(b => b.status === 'draft').length;
-      dashHidden.textContent = businesses.filter(b => b.status === 'hidden').length;
+      const draftBusinesses = businesses.filter(b => b.status === 'draft').length;
+      const hiddenBusinesses = businesses.filter(b => b.status === 'hidden').length;
+      const cities = new Set(businesses.map(b => b.city).filter(Boolean)).size;
+      const categories = new Set(businesses.map(b => b.category).filter(Boolean)).size;
+      setText('glanceApps', pendingApps); setText('glanceBusinesses', liveBusinesses); setText('glanceCategories', categories); setText('glanceCities', cities); setText('glanceOffline', draftBusinesses + hiddenBusinesses);
+      setText('dashReview', pendingApps); setText('dashPublished', liveBusinesses); setText('dashDrafts', draftBusinesses); setText('dashHidden', hiddenBusinesses);
+      setText('metricTotalBusinesses', businesses.length); setText('metricLiveBusinesses', liveBusinesses); setText('metricCities', cities); setText('metricCategories', categories);
       reviewQueue.innerHTML = applications.filter(a => a.status === 'pending').map(applicationCard).join('') || '<div class="record-card"><div><strong>No pending applications.</strong><p>Everything that needs review has been cleared.</p></div></div>';
-      healthCards.innerHTML = `<div class="stage-card"><strong>Land of Hearts is database powered.</strong><p>${liveBusinesses} published businesses are currently On Stage.</p></div><div class="stage-card"><strong>Watch the queue.</strong><p>${pendingApps} applications need a staff decision.</p></div>`;
+      healthCards.innerHTML = `<div class="stage-card"><strong>Land of Hearts is database powered.</strong><p>${liveBusinesses} published businesses are currently On Stage.</p></div><div class="stage-card"><strong>Watch the queue.</strong><p>${pendingApps} applications need a staff decision.</p></div><div class="stage-card"><strong>Coverage.</strong><p>${cities} cities and ${categories} categories are represented so far.</p></div>`;
       applicationRecords.innerHTML = applications.map(applicationCard).join('') || '<div class="record-card"><div><strong>No applications yet.</strong><p>Website submissions will appear here.</p></div></div>';
       businessRecords.innerHTML = businesses.map(businessCard).join('') || '<div class="record-card"><div><strong>No businesses yet.</strong><p>Add one manually or publish an application.</p></div></div>';
     }
@@ -200,15 +220,15 @@
     function applicationCard(app){
       const name = app.organization_name || app.contact_name || 'Application';
       const details = [app.type, app.email || 'No email', app.phone || 'No phone'].filter(Boolean).join(' · ');
-      const body = [app.category, app.address, app.description, app.notes].filter(Boolean).join(' | ');
+      const body = [app.category, app.address, app.city, app.description, app.notes].filter(Boolean).join(' | ');
       const actions = app.status === 'pending' ? `<button class="stage-btn" onclick="publishApplication('${app.id}')">Publish</button><button class="stage-btn" onclick="updateApplication('${app.id}','hidden')">Hide</button>` : `<button class="stage-btn" onclick="updateApplication('${app.id}','pending')">Reopen</button>`;
-      return `<div class="record-card"><div><small>${details}</small><strong>${name}</strong><p>${body || 'No notes provided.'}</p><span class="status ${statusClass(app.status)}">${statusLabel(app.status)}</span></div><div class="actions">${actions}</div></div>`;
+      return `<div class="record-card"><div><small>${esc(details)}</small><strong>${esc(name)}</strong><p>${esc(body || 'No notes provided.')}</p><span class="status ${statusClass(app.status)}">${statusLabel(app.status)}</span></div><div class="actions">${actions}</div></div>`;
     }
 
     function businessCard(b){
-      const details = `${b.category || 'Business'} · ${b.heart_rating || 'Community Heart'}`;
-      const body = [b.address, b.city, b.description].filter(Boolean).join(' | ');
-      return `<div class="record-card"><div><small>${details}</small><strong>${b.name}</strong><p>${body || 'No description.'}</p><span class="status ${statusClass(b.status)}">${statusLabel(b.status)}</span></div><div class="actions"><button class="stage-btn" onclick="updateBusiness('${b.id}','published')">Publish</button><button class="stage-btn" onclick="updateBusiness('${b.id}','hidden')">Hide</button><button class="stage-btn" onclick="deleteBusiness('${b.id}')">Delete</button></div></div>`;
+      const details = `${b.category || 'Business'} · ${b.heart_rating || 'Member Heart'} · ${b.city || 'Heartland'}`;
+      const body = [b.address, b.phone, b.website, b.description].filter(Boolean).join(' | ');
+      return `<div class="record-card ${b.featured ? 'featured' : ''}"><div><small>${esc(details)}</small><strong>${esc(b.name)}</strong><p>${esc(body || 'No description.')}</p><span class="status ${statusClass(b.status)}">${statusLabel(b.status)}</span></div><div class="actions"><button class="stage-btn" onclick="updateBusiness('${b.id}','published')">Publish</button><button class="stage-btn" onclick="updateBusiness('${b.id}','hidden')">Hide</button><button class="stage-btn" onclick="deleteBusiness('${b.id}')">Delete</button></div></div>`;
     }
 
     window.updateApplication = async (id,status) => {
@@ -230,7 +250,7 @@
         phone: app.phone || '',
         email: app.email || '',
         website: app.website || '',
-        heart_rating: 'Community Heart',
+        heart_rating: 'Member Heart',
         status: 'published',
         featured: false,
         approved_at: new Date().toISOString(),
@@ -249,6 +269,8 @@
     };
 
     window.deleteBusiness = async (id) => {
+      const ok = confirm('Delete this business from Backstage and On Stage?');
+      if (!ok) return;
       const res = await fetch(apiBase + `/businesses?id=eq.${id}`, { method:'DELETE', headers: authedHeaders({ Prefer:'return=minimal' }) });
       if (!res.ok) return toast('Delete failed');
       toast('Business deleted'); await loadBackstage();
@@ -256,8 +278,8 @@
 
     businessForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const payload = { name:businessName.value.trim(), category:businessCategory.value.trim(), address:businessAddress.value.trim(), city:businessCity.value.trim(), county:'Polk', heart_rating:businessHeart.value, status:businessStatus.value, description:businessDescription.value.trim(), featured:false };
-      const res = await fetch(apiBase + '/businesses', { method:'POST', headers: authedHeaders({ Prefer:'return=minimal' }), body: JSON.stringify(payload) });
+      const payload = { name:businessName.value.trim(), category:businessCategory.value.trim(), address:businessAddress.value.trim(), city:businessCity.value.trim(), county:'Polk', heart_rating:businessHeart.value, status:businessStatus.value, description:businessDescription.value.trim(), phone:businessPhone.value.trim(), email:businessEmail.value.trim(), website:normalizeWebsite(businessWebsite.value.trim()), featured:false };
+      const res = await fetch(apiBase + '/businesses', { method:'POST', headers: authedHeaders({ Prefer:'return=minimal' }), body:JSON.stringify(payload) });
       if (!res.ok) return toast('Business save failed');
       businessForm.reset(); toast('Business saved'); await loadBackstage();
     });
