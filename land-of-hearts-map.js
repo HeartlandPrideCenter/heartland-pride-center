@@ -2,40 +2,21 @@ window.HPC_LAND_OF_HEARTS_MAP = {
   init(businesses) {
     const mapEl = document.getElementById('lohMap');
     if (!mapEl) return null;
-
     mapEl.style.display = 'block';
     mapEl.style.width = '100%';
     mapEl.style.height = '100%';
-    mapEl.style.minHeight = '520px';
-
-    const wrap = mapEl.closest('.loh-map-wrap');
-    if (wrap) {
-      wrap.style.display = 'block';
-      wrap.style.width = '100%';
-      wrap.style.minHeight = '520px';
-      wrap.style.position = 'relative';
-      wrap.style.zIndex = '1';
-    }
+    mapEl.style.minHeight = '560px';
 
     if (!window.L) {
       mapEl.innerHTML = '<div class="loh-map-fallback"><strong>❤️ Land of Hearts Map</strong><p>The interactive map engine did not load. Published businesses are still listed below.</p></div>';
-      return { render() {}, focus() {}, resize() {}, locate() {}, setLayer() {} };
+      return { render() {}, focus() {}, resize() {}, locate() {}, setLayer() {}, getVisible() { return []; } };
     }
 
     const map = L.map(mapEl, { scrollWheelZoom: false, tap: true, zoomControl: true }).setView([27.90, -81.60], 9);
     const layers = {
-      standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }),
-      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri'
-      }),
-      terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        maxZoom: 17,
-        attribution: '&copy; OpenTopoMap contributors'
-      })
+      standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles &copy; Esri' }),
+      terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenTopoMap contributors' })
     };
     layers.standard.addTo(map);
     let activeLayer = layers.standard;
@@ -44,57 +25,22 @@ window.HPC_LAND_OF_HEARTS_MAP = {
     let markers = [];
     let userMarker = null;
     let currentList = businesses || [];
-    const fallback = [
-      [27.9014, -81.5859], [28.0395, -81.9498], [27.9659, -81.9734], [27.8964, -81.8431],
-      [28.1142, -81.6179], [27.7523, -81.8017], [28.1558, -81.5326], [27.8397, -81.5415]
-    ];
-
-    const badgeIcon = {
-      lgbtq_owned: '🏳️‍🌈', proud_ally: '🤝', accessible: '♿',
-      'LGBTQ+ Owned or Operated': '🏳️‍🌈', 'Proud Ally': '🤝', 'Accessible': '♿'
-    };
+    const fallback = [[27.9014,-81.5859],[28.0395,-81.9498],[27.9659,-81.9734],[27.8964,-81.8431],[28.1142,-81.6179],[27.7523,-81.8017],[28.1558,-81.5326],[27.8397,-81.5415]];
+    const badgeIcon = { lgbtq_owned:'🏳️‍🌈', proud_ally:'🤝', accessible:'♿', 'LGBTQ+ Owned or Operated':'🏳️‍🌈', 'Proud Ally':'🤝', 'Accessible':'♿' };
 
     function heartIcon(active=false) {
-      return L.divIcon({
-        className: 'loh-heart-div-icon',
-        html: '<div class="loh-heart-marker' + (active ? ' active' : '') + '">♥</div>',
-        iconSize: active ? [52, 52] : [44, 44],
-        iconAnchor: active ? [26, 26] : [22, 22],
-        popupAnchor: [0, -24]
-      });
+      return L.divIcon({ className:'loh-heart-div-icon', html:'<div class="loh-heart-marker' + (active ? ' active' : '') + '">♥</div>', iconSize: active ? [52,52] : [44,44], iconAnchor: active ? [26,26] : [22,22], popupAnchor:[0,-24] });
     }
-
-    function userIcon() {
-      return L.divIcon({
-        className: 'loh-user-div-icon',
-        html: '<div class="loh-user-marker">📍</div>',
-        iconSize: [42, 42],
-        iconAnchor: [21, 21]
-      });
-    }
+    function userIcon() { return L.divIcon({ className:'loh-user-div-icon', html:'<div class="loh-user-marker">📍</div>', iconSize:[42,42], iconAnchor:[21,21] }); }
 
     const style = document.createElement('style');
     style.textContent = '.loh-heart-marker{display:grid;place-items:center;width:44px;height:44px;border-radius:999px;background:linear-gradient(135deg,#f7d66b,#d4af37);border:2px solid rgba(255,255,255,.78);box-shadow:0 12px 24px rgba(0,0,0,.28);color:#071827;font-size:25px;font-weight:950}.loh-heart-marker.active{transform:scale(1.16);box-shadow:0 0 0 10px rgba(239,205,114,.18),0 16px 30px rgba(0,0,0,.32)}.loh-user-marker{display:grid;place-items:center;width:42px;height:42px;border-radius:999px;background:#fff;border:3px solid #2f80ed;box-shadow:0 12px 28px rgba(0,0,0,.26);font-size:20px}.loh-popup .loh-map-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.loh-popup .loh-map-actions a,.loh-popup .loh-map-actions button{border:1px solid rgba(239,205,114,.28);border-radius:999px;background:rgba(212,175,55,.08);color:#f5f1e8;padding:8px 10px;font-weight:900;text-decoration:none;font:inherit;cursor:pointer}.loh-map-fallback{display:grid;place-items:center;text-align:center;min-height:420px;padding:32px;color:#f5f1e8}';
     document.head.appendChild(style);
 
-    function coordsFor(b, index) {
-      if (b.latitude && b.longitude) return [Number(b.latitude), Number(b.longitude)];
-      return fallback[index % fallback.length];
-    }
-
-    function iconsFor(b) {
-      const list = Array.isArray(b.badges) ? b.badges : [];
-      return '<div class="loh-card-icons"><span>❤️ Member</span>' + list.map((key) => '<span>' + (badgeIcon[key] || '❤️') + '</span>').join('') + '</div>';
-    }
-
-    function escapeText(value) {
-      return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
-    }
-
-    function directionsUrl(b) {
-      return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([b.address, b.city, 'Florida'].filter(Boolean).join(', '));
-    }
-
+    function coordsFor(b, index) { if (b.latitude && b.longitude) return [Number(b.latitude), Number(b.longitude)]; return fallback[index % fallback.length]; }
+    function escapeText(value) { return String(value || '').replace(/[&<>"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[char])); }
+    function directionsUrl(b) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([b.address,b.city,'Florida'].filter(Boolean).join(', ')); }
+    function iconsFor(b) { const list = Array.isArray(b.badges) ? b.badges : []; return '<div class="loh-card-icons"><span>❤️ Member</span>' + list.map(key => '<span>' + (badgeIcon[key] || '❤️') + '</span>').join('') + '</div>'; }
     function popupFor(b, index) {
       const desc = escapeText(b.public_description || b.description || 'Affirming business listing.');
       const place = escapeText([b.address, b.city].filter(Boolean).join(', '));
@@ -102,76 +48,31 @@ window.HPC_LAND_OF_HEARTS_MAP = {
       const directions = b.address || b.city ? '<a href="' + directionsUrl(b) + '" target="_blank" rel="noopener">Directions</a>' : '';
       return '<div class="loh-popup"><small>' + escapeText(b.category || 'Local Business') + '</small><h3>❤️ ' + escapeText(b.name) + '</h3><p>' + desc + '</p><p>' + place + '</p>' + iconsFor(b) + '<div class="loh-map-actions"><button type="button" data-loh-profile="' + index + '">Profile</button>' + directions + website + '</div></div>';
     }
-
-    map.on('popupopen', (event) => {
-      const btn = event.popup.getElement()?.querySelector('[data-loh-profile]');
-      if (btn) btn.onclick = () => window.dispatchEvent(new CustomEvent('loh:profile-open', { detail: { index: Number(btn.dataset.lohProfile), business: currentList[Number(btn.dataset.lohProfile)] } }));
-    });
-
-    function resize() {
-      setTimeout(() => map.invalidateSize(true), 60);
-      setTimeout(() => map.invalidateSize(true), 250);
-      setTimeout(() => map.invalidateSize(true), 700);
+    function getVisible() {
+      const bounds = map.getBounds();
+      return markers.map((marker, index) => ({ marker, index, business: currentList[index] })).filter(item => bounds.contains(item.marker.getLatLng())).map(item => item.business);
     }
-
-    function focus(index) {
-      markers.forEach((marker, i) => marker.setIcon(heartIcon(i === index)));
-      const marker = markers[index];
-      if (marker) {
-        map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12), { animate: true });
-        marker.openPopup();
-      }
-      resize();
-    }
-
+    function announceVisible() { window.dispatchEvent(new CustomEvent('loh:visible-businesses', { detail: { businesses: getVisible() } })); }
+    function resize() { setTimeout(() => map.invalidateSize(true),60); setTimeout(() => map.invalidateSize(true),250); setTimeout(() => { map.invalidateSize(true); announceVisible(); },700); }
+    function focus(index) { markers.forEach((marker,i) => marker.setIcon(heartIcon(i === index))); const marker = markers[index]; if (marker) { map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12), { animate:true }); marker.openPopup(); } resize(); }
     function render(list) {
       currentList = list || [];
-      layer.clearLayers();
-      markers = [];
+      layer.clearLayers(); markers = [];
       const points = [];
-      currentList.forEach((b, index) => {
-        const point = coordsFor(b, index);
-        points.push(point);
-        const marker = L.marker(point, { icon: heartIcon(false), title: b.name || 'Land of Hearts business' }).addTo(layer).bindPopup(popupFor(b, index));
-        marker.on('click', () => {
-          focus(index);
-          window.dispatchEvent(new CustomEvent('loh:marker-selected', { detail: { index, business: b } }));
-        });
-        markers.push(marker);
-      });
-      if (points.length) map.fitBounds(points, { padding: [55, 55], maxZoom: 12 });
-      else map.setView([27.90, -81.60], 9);
-      resize();
+      currentList.forEach((b,index) => { const point = coordsFor(b,index); points.push(point); const marker = L.marker(point,{ icon:heartIcon(false), title:b.name || 'Land of Hearts business' }).addTo(layer).bindPopup(popupFor(b,index)); marker.on('click',()=>{ focus(index); window.dispatchEvent(new CustomEvent('loh:marker-selected',{ detail:{ index,business:b } })); }); markers.push(marker); });
+      if (points.length) map.fitBounds(points,{ padding:[55,55], maxZoom:12 }); else map.setView([27.90,-81.60],9);
+      resize(); announceVisible();
     }
-
-    function setLayer(name) {
-      const next = layers[name] || layers.standard;
-      if (activeLayer !== next) {
-        map.removeLayer(activeLayer);
-        activeLayer = next;
-        activeLayer.addTo(map);
-      }
-      resize();
-    }
-
+    function setLayer(name) { const next = layers[name] || layers.standard; if (activeLayer !== next) { map.removeLayer(activeLayer); activeLayer = next; activeLayer.addTo(map); } resize(); }
     function locate() {
-      if (!navigator.geolocation) {
-        window.dispatchEvent(new CustomEvent('loh:map-message', { detail: { message: 'Location is not available on this device.' } }));
-        return;
-      }
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const point = [pos.coords.latitude, pos.coords.longitude];
-        if (userMarker) userMarker.remove();
-        userMarker = L.marker(point, { icon: userIcon(), title: 'Your location' }).addTo(map).bindPopup('You are here');
-        map.setView(point, 12, { animate: true });
-        window.dispatchEvent(new CustomEvent('loh:located', { detail: { lat: point[0], lng: point[1] } }));
-        resize();
-      }, () => window.dispatchEvent(new CustomEvent('loh:map-message', { detail: { message: 'Unable to access your location.' } })), { enableHighAccuracy: true, timeout: 9000 });
+      if (!navigator.geolocation) { window.dispatchEvent(new CustomEvent('loh:map-message',{ detail:{ message:'Location is not available on this device.' } })); return; }
+      navigator.geolocation.getCurrentPosition(pos => { const point=[pos.coords.latitude,pos.coords.longitude]; if (userMarker) userMarker.remove(); userMarker = L.marker(point,{ icon:userIcon(), title:'Your location' }).addTo(map).bindPopup('You are here'); map.setView(point,12,{ animate:true }); window.dispatchEvent(new CustomEvent('loh:located',{ detail:{ lat:point[0], lng:point[1] } })); resize(); }, () => window.dispatchEvent(new CustomEvent('loh:map-message',{ detail:{ message:'Unable to access your location.' } })), { enableHighAccuracy:true, timeout:9000 });
     }
-
+    map.on('popupopen', event => { const btn = event.popup.getElement()?.querySelector('[data-loh-profile]'); if (btn) btn.onclick = () => window.dispatchEvent(new CustomEvent('loh:profile-open',{ detail:{ index:Number(btn.dataset.lohProfile), business:currentList[Number(btn.dataset.lohProfile)] } })); });
+    map.on('moveend zoomend', announceVisible);
     render(businesses || []);
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', resize);
-    return { render, focus, resize, setLayer, locate };
+    return { render, focus, resize, setLayer, locate, getVisible };
   }
 };
