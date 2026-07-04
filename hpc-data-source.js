@@ -8,12 +8,13 @@ if (window.location.pathname.includes('business-network')) {
 }
 
 if (window.location.pathname.includes('staff')) {
-  const version = 'v2-20260703-2';
+  const version = 'v2-20260703-3';
   const scripts = [
     'backstage-business-coordinates.js',
     'backstage-business-network-overrides.js',
     'backstage-business-editor.js',
-    'backstage-business-workflow-v2.js'
+    'backstage-business-workflow-v2.js',
+    'backstage-business-manager.js'
   ];
 
   function loadBackstageScript(index = 0) {
