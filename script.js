@@ -58,19 +58,15 @@ if (menuToggle && navLinks) {
     menuToggle.classList.toggle('is-open', isOpen);
     menuToggle.setAttribute('aria-expanded', String(isOpen));
   });
-
   navLinks.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMobileMenu));
-
   document.addEventListener('click', (event) => {
     if (!document.body.classList.contains('menu-open')) return;
     if (siteHeader && siteHeader.contains(event.target)) return;
     closeMobileMenu();
   });
-
   window.addEventListener('scroll', () => {
     if (document.body.classList.contains('menu-open')) closeMobileMenu();
   }, { passive: true });
-
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeMobileMenu();
   });
@@ -130,3 +126,47 @@ if (hero && !document.querySelector('.rainbow-signature-strip')) {
   strip.setAttribute('aria-hidden', 'true');
   hero.insertAdjacentElement('afterend', strip);
 }
+
+function installLandOfHeartsAnimation() {
+  const page = document.querySelector('.business-network-page');
+  const hero = document.querySelector('.land-hero');
+  const search = document.querySelector('.search-strip');
+  if (!page || !hero || !search || document.querySelector('.loh-heart-animation')) return;
+
+  const css = document.createElement('style');
+  css.textContent = `
+    .loh-heart-animation{width:min(1180px,88vw);margin:26px auto 30px;border:1px solid rgba(239,205,114,.26);border-radius:34px;background:radial-gradient(circle at 50% 50%,rgba(239,205,114,.16),rgba(255,255,255,.052) 42%,rgba(255,255,255,.028) 100%);box-shadow:0 28px 90px rgba(0,0,0,.26);overflow:hidden;position:relative;isolation:isolate}
+    .loh-heart-animation::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 50% 50%,rgba(239,205,114,.18),transparent 35%),linear-gradient(120deg,rgba(230,57,70,.10),rgba(58,134,255,.08),rgba(155,93,229,.10));opacity:.8;animation:lohAmbient 12s ease-in-out infinite alternate;z-index:-2}
+    .loh-heart-animation::after{content:"";position:absolute;inset:1px;border-radius:33px;background:linear-gradient(180deg,rgba(6,19,35,.18),rgba(6,19,35,.52));z-index:-1}
+    .loh-animation-inner{display:grid;grid-template-columns:.95fr 1.05fr;gap:34px;align-items:center;padding:32px clamp(22px,4vw,56px)}
+    .loh-animation-copy .eyebrow{margin-bottom:12px}.loh-animation-copy h2{font-family:"Inter",sans-serif;font-size:clamp(2rem,4vw,4.35rem);line-height:1.02;letter-spacing:-.045em;margin:0 0 14px}.loh-animation-copy p{color:rgba(245,241,232,.74);font-size:1.03rem;line-height:1.75;max-width:620px}.loh-animation-copy strong{color:var(--gold-light)}
+    .loh-florida-stage{position:relative;min-height:410px;border-radius:30px;border:1px solid rgba(245,241,232,.12);background:radial-gradient(circle at 48% 42%,rgba(245,241,232,.09),rgba(255,255,255,.028) 58%,rgba(5,18,32,.42));overflow:hidden}
+    .loh-florida-stage .loh-heart{position:absolute;left:var(--x);top:var(--y);font-size:var(--s);line-height:1;transform:translate(-50%,-50%) scale(.15);opacity:0;filter:drop-shadow(0 8px 18px rgba(0,0,0,.32));animation:lohHeartPop .72s cubic-bezier(.2,1.45,.35,1) forwards,lohHeartPulse 3.2s ease-in-out infinite;animation-delay:var(--d),calc(var(--d) + 2.6s)}
+    .loh-florida-stage .loh-heart:nth-child(4n+1){color:#f0ce73}.loh-florida-stage .loh-heart:nth-child(4n+2){color:#ff6f91}.loh-florida-stage .loh-heart:nth-child(4n+3){color:#66d9ef}.loh-florida-stage .loh-heart:nth-child(4n+4){color:#b794f4}
+    .loh-center-heart{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%) scale(.35);opacity:0;width:min(190px,44vw);height:min(190px,44vw);border-radius:999px;background:radial-gradient(circle at 42% 36%,#fff7d6,#efcd72 42%,#b8871e 100%);color:#071827;display:grid;place-items:center;text-align:center;padding:26px;font-weight:950;letter-spacing:-.04em;line-height:1.02;box-shadow:0 0 0 1px rgba(255,255,255,.28),0 18px 58px rgba(0,0,0,.32),0 0 70px rgba(239,205,114,.35);animation:lohCenterPop .9s cubic-bezier(.18,1.35,.28,1) 1.12s forwards,lohCenterBeat 2.8s ease-in-out 2.2s infinite;z-index:6}
+    .loh-center-heart::before{content:"♥";position:absolute;inset:-18px;display:grid;place-items:center;font-size:10rem;color:rgba(255,255,255,.16);z-index:-1}.loh-center-heart span{display:block;font-size:clamp(1.22rem,2.4vw,1.72rem)}
+    .loh-ripple{position:absolute;left:50%;top:48%;width:130px;height:130px;border-radius:999px;border:1px solid rgba(239,205,114,.55);transform:translate(-50%,-50%) scale(.4);opacity:0;animation:lohRipple 3.2s ease-out infinite;animation-delay:calc(1.9s + var(--r))}.loh-ripple:nth-of-type(2){border-color:rgba(255,111,145,.4)}.loh-ripple:nth-of-type(3){border-color:rgba(102,217,239,.34)}
+    @keyframes lohHeartPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.12) rotate(-12deg)}68%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(4deg)}100%{opacity:.96;transform:translate(-50%,-50%) scale(1) rotate(0)}}
+    @keyframes lohHeartPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.09)}}
+    @keyframes lohCenterPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.32)}70%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    @keyframes lohCenterBeat{0%,100%{transform:translate(-50%,-50%) scale(1)}48%{transform:translate(-50%,-50%) scale(1.045)}}
+    @keyframes lohRipple{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}18%{opacity:.72}100%{opacity:0;transform:translate(-50%,-50%) scale(4.2)}}
+    @keyframes lohAmbient{from{transform:rotate(0deg) scale(1)}to{transform:rotate(8deg) scale(1.08)}}
+    @media(max-width:880px){.loh-animation-inner{grid-template-columns:1fr}.loh-florida-stage{min-height:360px}.map-shell{margin-top:10px}}
+    @media(max-width:620px){.loh-heart-animation{width:min(92vw,1180px);border-radius:28px}.loh-animation-inner{padding:24px 18px}.loh-florida-stage{min-height:330px;border-radius:24px}.loh-florida-stage .loh-heart{font-size:calc(var(--s) * .84)}.loh-center-heart{width:142px;height:142px}.loh-center-heart::before{font-size:7.6rem}.loh-center-heart span{font-size:1.12rem}}
+    @media(prefers-reduced-motion:reduce){.loh-florida-stage .loh-heart,.loh-center-heart,.loh-ripple,.loh-heart-animation::before{animation:none!important;opacity:1!important}.loh-florida-stage .loh-heart{transform:translate(-50%,-50%) scale(1)!important}.loh-center-heart{transform:translate(-50%,-50%) scale(1)!important}}
+  `;
+  document.head.appendChild(css);
+
+  const points = [
+    [45,8,1.6,.04],[51,12,1.35,.18],[56,16,1.28,.3],[53,21,1.18,.42],[57,26,1.08,.54],[54,31,1.04,.66],[58,36,1.02,.78],[55,41,.98,.9],[59,46,.98,1.02],[56,51,.94,1.14],[60,56,.92,1.26],[57,61,.9,1.38],[61,66,.88,1.5],[59,71,.86,1.62],[64,75,.8,1.74],[70,78,.74,1.86],[76,80,.68,1.98],[82,80,.62,2.1],[87,77,.56,2.22],[69,68,.72,2.34],[50,58,.9,2.46],[47,49,.92,2.58],[49,39,.98,2.7],[46,29,1.04,2.82],[41,20,1.08,2.94],[36,14,.98,3.06],[33,22,.88,3.18],[37,30,.84,3.3]
+  ];
+  const hearts = points.map(([x,y,s,d]) => `<span class="loh-heart" style="--x:${x}%;--y:${y}%;--s:${s}rem;--d:${d}s">♥</span>`).join('');
+  const panel = document.createElement('section');
+  panel.className = 'loh-heart-animation';
+  panel.setAttribute('aria-label', 'Animated Land of Hearts invitation');
+  panel.innerHTML = `<div class="loh-animation-inner"><div class="loh-animation-copy"><p class="eyebrow">Land of Hearts</p><h2>Find your place here.</h2><p>One Heart becomes two, then three, then a whole map of welcoming places across Florida's Heartland. <strong>Each new business makes the map easier to trust.</strong></p></div><div class="loh-florida-stage" aria-hidden="true"><span class="loh-ripple" style="--r:0s"></span><span class="loh-ripple" style="--r:.55s"></span><span class="loh-ripple" style="--r:1.1s"></span>${hearts}<div class="loh-center-heart"><span>Find your place here.</span></div></div></div>`;
+  search.insertAdjacentElement('beforebegin', panel);
+}
+
+installLandOfHeartsAnimation();
