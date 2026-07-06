@@ -4,6 +4,11 @@ window.HPC_DATA_PUBLIC_TOKEN = 'sb_publishable_UyoqGKapp6Da2CNE4qqlZA_BodqSra8';
 if (window.location.pathname.includes('business-network')) {
   const applicationModalScript = document.createElement('script');
   applicationModalScript.src = 'land-of-hearts-application-modal.js?v=v2-20260703';
+  applicationModalScript.onload = () => {
+    const stagePolishScript = document.createElement('script');
+    stagePolishScript.src = 'business-network-stage-polish.js?v=v1-20260706';
+    document.head.appendChild(stagePolishScript);
+  };
   document.head.appendChild(applicationModalScript);
 }
 
