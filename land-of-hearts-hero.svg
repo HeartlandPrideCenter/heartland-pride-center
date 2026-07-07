@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Land of Hearts hero artwork</title>
+  <desc id="desc">A refined dark navy and gold Heartland Pride Center graphic with colorful hearts forming the shape of Florida and a center heart reading Find your place here.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#071827"/>
+      <stop offset="0.55" stop-color="#0b2036"/>
+      <stop offset="1" stop-color="#061323"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f5d77f"/>
+      <stop offset="1" stop-color="#b78628"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ff6f91"/><stop offset="1" stop-color="#bd2541"/></linearGradient>
+    <linearGradient id="blue" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#66d9ef"/><stop offset="1" stop-color="#3176c9"/></linearGradient>
+    <linearGradient id="purple" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#b794f4"/><stop offset="1" stop-color="#6d46cf"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="48%" r="55%">
+      <stop offset="0" stop-color="#efcd72" stop-opacity="0.28"/>
+      <stop offset="0.42" stop-color="#efcd72" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#efcd72" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity="0.38"/>
+    </filter>
+    <symbol id="heart" viewBox="0 0 64 58">
+      <path d="M32 54S4 38 4 18C4 8 12 2 22 2c6 0 10 3 10 7 0-4 4-7 10-7 10 0 18 6 18 16 0 20-28 36-28 36Z"/>
+    </symbol>
+  </defs>
+  <rect width="1200" height="720" rx="44" fill="url(#bg)"/>
+  <rect x="28" y="28" width="1144" height="664" rx="34" fill="none" stroke="#f0ce73" stroke-opacity="0.18"/>
+  <circle cx="745" cy="350" r="310" fill="url(#glow)"/>
+  <g opacity="0.72">
+    <path d="M735 64C830 94 878 165 870 246c-8 82 16 137 75 186 43 36 102 101 78 150-21 43-84 35-134 4-62-38-92-92-128-153-35-60-91-79-132-134-51-69-31-157 16-211 24-28 54-37 90-24Z" fill="none" stroke="#f5f1e8" stroke-opacity="0.10" stroke-width="3"/>
+  </g>
+  <g transform="translate(0,8)" filter="url(#shadow)">
+    <use href="#heart" x="602" y="62" width="42" height="38" fill="url(#gold)"/>
+    <use href="#heart" x="655" y="86" width="38" height="34" fill="url(#red)"/>
+    <use href="#heart" x="706" y="118" width="36" height="32" fill="url(#blue)"/>
+    <use href="#heart" x="748" y="164" width="34" height="31" fill="url(#purple)"/>
+    <use href="#heart" x="724" y="217" width="32" height="29" fill="url(#gold)"/>
+    <use href="#heart" x="772" y="270" width="32" height="29" fill="url(#red)"/>
+    <use href="#heart" x="744" y="324" width="30" height="27" fill="url(#blue)"/>
+    <use href="#heart" x="790" y="378" width="30" height="27" fill="url(#purple)"/>
+    <use href="#heart" x="766" y="435" width="28" height="25" fill="url(#gold)"/>
+    <use href="#heart" x="810" y="490" width="27" height="24" fill="url(#red)"/>
+    <use href="#heart" x="846" y="532" width="25" height="22" fill="url(#blue)"/>
+    <use href="#heart" x="908" y="559" width="23" height="21" fill="url(#purple)"/>
+    <use href="#heart" x="980" y="556" width="21" height="19" fill="url(#gold)"/>
+    <use href="#heart" x="922" y="503" width="23" height="21" fill="url(#red)"/>
+    <use href="#heart" x="858" y="456" width="25" height="23" fill="url(#blue)"/>
+    <use href="#heart" x="672" y="450" width="28" height="25" fill="url(#purple)"/>
+    <use href="#heart" x="646" y="386" width="30" height="27" fill="url(#gold)"/>
+    <use href="#heart" x="654" y="310" width="31" height="28" fill="url(#red)"/>
+    <use href="#heart" x="614" y="236" width="32" height="29" fill="url(#blue)"/>
+    <use href="#heart" x="558" y="166" width="31" height="28" fill="url(#purple)"/>
+    <use href="#heart" x="520" y="108" width="30" height="27" fill="url(#gold)"/>
+    <use href="#heart" x="486" y="184" width="27" height="24" fill="url(#red)"/>
+    <use href="#heart" x="532" y="256" width="27" height="24" fill="url(#blue)"/>
+  </g>
+  <g filter="url(#shadow)">
+    <use href="#heart" x="602" y="276" width="220" height="200" fill="url(#red)"/>
+    <text x="712" y="378" text-anchor="middle" fill="#fff8e7" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="900" letter-spacing="-1.4">
+      <tspan x="712" dy="0">Find your</tspan>
+      <tspan x="712" dy="34">place here.</tspan>
+    </text>
+  </g>
+  <g transform="translate(80,118)">
+    <text x="0" y="0" fill="#f0ce73" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="900" letter-spacing="4">LAND OF HEARTS</text>
+    <text x="0" y="76" fill="#f5f1e8" font-family="Inter, Arial, sans-serif" font-size="70" font-weight="900" letter-spacing="-4">Find your</text>
+    <text x="0" y="146" fill="#f5f1e8" font-family="Inter, Arial, sans-serif" font-size="70" font-weight="900" letter-spacing="-4">place here.</text>
+    <text x="0" y="206" fill="#d8d0bd" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500">A growing map of affirming businesses</text>
+    <text x="0" y="238" fill="#d8d0bd" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500">across Florida’s Heartland.</text>
+  </g>
+</svg>
