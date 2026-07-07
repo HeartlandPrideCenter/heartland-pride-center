@@ -5,21 +5,40 @@
     accessible: '♿ Accessible',
     'LGBTQ+ Owned or Operated': '🏳️‍🌈 LGBTQ+ Owned',
     'Proud Ally': '🤝 Proud Ally',
-    'Accessible': '♿ Accessible'
+    'Accessible': '♿ Accessible',
+    LGBTQ_Owned: '🏳️‍🌈 LGBTQ+ Owned',
+    Proud_Ally: '🤝 Proud Ally',
+    Accessibility: '♿ Accessible'
   };
   const recognitionIcon = {
     founding_member: '❤️ Founding Member',
     verified: '⭐ Heartland Verified',
-    heart_of_community: '💖 Heart of the Community'
+    heart_of_community: '💖 Heart of the Community',
+    Founding: '❤️ Founding Member',
+    Verified: '⭐ Heartland Verified'
   };
   const sponsorIcon = { bronze: '🥉 Bronze Sponsor', silver: '🥈 Silver Sponsor', gold: '🥇 Gold Sponsor', platinum: '💎 Platinum Sponsor' };
 
   function esc(v) { return String(v || '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
   function normalizeWebsite(url) { return !url ? '' : (/^https?:\/\//i.test(url) ? url : 'https://' + url); }
-  function iconLine(list, map) { return (Array.isArray(list) ? list : []).map(k => `<span>${esc(map[k] || k)}</span>`).join(''); }
+  function toList(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+    if (typeof value === 'object') return Object.entries(value).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    const raw = String(value).trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+      if (parsed && typeof parsed === 'object') return Object.entries(parsed).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    } catch (e) {}
+    return raw.split(/\n|,|\||;/).map(x => x.trim()).filter(Boolean);
+  }
+  function iconLine(value, map) { return toList(value).map(k => `<span>${esc(map[k] || k)}</span>`).join(''); }
   function splitNotes(notes) { if (!notes) return []; return String(notes).split(/\n|,|\|/).map(x => x.trim()).filter(Boolean).filter(x => !/^private notes/i.test(x) && !/^preferred contact/i.test(x) && !/^consent/i.test(x)).slice(0,4); }
   function commitment(b) { return b.heart_rating || b.commitment_level || 'Member Heart'; }
   function directionsUrl(b) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([b.address,b.city,'Florida'].filter(Boolean).join(', ')); }
+  function allBadges(b) { return [...toList(b.badges), ...toList(b.recognition_badges), ...(b.sponsor_level ? [b.sponsor_level] : [])]; }
 
   function ensureShell() {
     let shell = document.getElementById('lohDetailShell');
@@ -47,8 +66,9 @@
     const socials = [b.facebook, b.instagram, b.linkedin].filter(Boolean).map(s => `<a href="${esc(normalizeWebsite(s))}" target="_blank" rel="noopener">Social</a>`).join('');
     const hours = b.hours || b.business_hours || 'Hours available from the business.';
     const services = b.services || b.service_area || 'Services and offerings may vary. Contact the business for current details.';
-    const accessible = Array.isArray(b.badges) && (b.badges.includes('Accessible') || b.badges.includes('accessible')) ? 'Accessibility information provided by the business.' : 'Accessibility details may be added after review.';
-    lohDetailContent.innerHTML = `<div class="loh-cover"><div class="loh-logo-bubble">♥</div></div><div class="loh-profile-body"><div class="loh-detail-header"><span class="eyebrow">Land of Hearts Profile</span><h2>❤️ ${esc(b.name)}</h2><p>${esc([b.category, b.city, commitment(b)].filter(Boolean).join(' · '))}</p></div><div class="loh-pill-line"><span>❤️ ${esc(commitment(b))}</span>${iconLine(b.badges,badgeIcon)}${iconLine(b.recognition_badges,recognitionIcon)}${b.sponsor_level ? `<span>${esc(sponsorIcon[b.sponsor_level] || b.sponsor_level)}</span>` : ''}${notes}</div><p>${esc(b.public_description || b.description || 'Affirming business listing.')}</p><div class="loh-profile-grid"><div><small>Location</small>${esc([b.address,b.city,b.county ? b.county + ' County' : ''].filter(Boolean).join(' · ') || 'Location available soon')}</div><div><small>Services</small>${esc(services)}</div><div><small>Hours</small>${esc(hours)}</div><div><small>Accessibility</small>${esc(accessible)}</div></div><div class="loh-detail-actions">${website}${directions}${phone}${email}${socials}</div><div class="loh-member-seal"><strong>Proud Member of the Heartland Pride Center Affirming Business Network</strong>This listing has been reviewed for publication by Heartland Pride Center. Community reviews are not used here; recognition is based on participation, verification, and relationship with the network.</div></div>`;
+    const accessible = allBadges(b).some(x => /accessible/i.test(x)) ? 'Accessibility information provided by the business.' : 'Accessibility details may be added after review.';
+    const profileBadges = `<span>❤️ ${esc(commitment(b))}</span>${iconLine(b.badges,badgeIcon)}${iconLine(b.recognition_badges,recognitionIcon)}${b.sponsor_level ? `<span>${esc(sponsorIcon[b.sponsor_level] || b.sponsor_level)}</span>` : ''}${notes}`;
+    lohDetailContent.innerHTML = `<div class="loh-cover"><div class="loh-logo-bubble">♥</div></div><div class="loh-profile-body"><div class="loh-detail-header"><span class="eyebrow">Land of Hearts Profile</span><h2>❤️ ${esc(b.name)}</h2><p>${esc([b.category, b.city, commitment(b)].filter(Boolean).join(' · '))}</p></div><div class="loh-pill-line">${profileBadges}</div><p>${esc(b.public_description || b.description || 'Affirming business listing.')}</p><div class="loh-profile-grid"><div><small>Location</small>${esc([b.address,b.city,b.county ? b.county + ' County' : ''].filter(Boolean).join(' · ') || 'Location available soon')}</div><div><small>Services</small>${esc(services)}</div><div><small>Hours</small>${esc(hours)}</div><div><small>Accessibility</small>${esc(accessible)}</div></div><div class="loh-detail-actions">${website}${directions}${phone}${email}${socials}</div><div class="loh-member-seal"><strong>Proud Member of the Heartland Pride Center Affirming Business Network</strong>This listing has been reviewed for publication by Heartland Pride Center. Community reviews are not used here; recognition is based on participation, verification, and relationship with the network.</div></div>`;
     shell.classList.add('open');
   }
 
@@ -56,7 +76,7 @@
     render(container, list, onSelect) {
       ensureShell();
       container.innerHTML = (list || []).length ? list.map((b, index) => {
-        const badges = iconLine(b.badges, badgeIcon) || '<span>❤️ Member</span>';
+        const badges = iconLine(b.badges, badgeIcon) + iconLine(b.recognition_badges, recognitionIcon) + (b.sponsor_level ? `<span>${esc(sponsorIcon[b.sponsor_level] || b.sponsor_level)}</span>` : '') || '<span>❤️ Member</span>';
         const detail = [b.category || 'Business', b.city || 'Heartland', commitment(b)].join(' · ');
         const description = esc(b.public_description || b.description || '').slice(0, 170);
         return `<article class="loh-row" data-index="${index}"><div class="loh-row-heart">♥</div><div><strong>${esc(b.name)}</strong><small>${esc(detail)}</small>${description ? `<p>${description}${description.length >= 170 ? '…' : ''}</p>` : ''}<div class="loh-row-icons">${badges}</div></div><div class="loh-row-actions"><button class="loh-mini-btn" type="button" data-action="view">View Profile</button></div></article>`;
