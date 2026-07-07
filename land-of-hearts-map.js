@@ -28,17 +28,41 @@ window.HPC_LAND_OF_HEARTS_MAP = {
     const fallback = [[27.9014,-81.5859],[28.0395,-81.9498],[27.9659,-81.9734],[27.8964,-81.8431],[28.1142,-81.6179],[27.7523,-81.8017],[28.1558,-81.5326],[27.8397,-81.5415]];
     const badgeIcon = { lgbtq_owned:'🏳️‍🌈', proud_ally:'🤝', accessible:'♿', 'LGBTQ+ Owned or Operated':'🏳️‍🌈', 'Proud Ally':'🤝', 'Accessible':'♿' };
 
-    function heartIcon(active=false) { return L.divIcon({ className:'loh-heart-div-icon', html:'<div class="loh-heart-marker' + (active ? ' active' : '') + '">♥</div>', iconSize: active ? [52,52] : [44,44], iconAnchor: active ? [26,26] : [22,22], popupAnchor:[0,-24] }); }
+    function toList(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+      if (typeof value === 'object') return Object.entries(value).filter(([, v]) => Boolean(v)).map(([k]) => k);
+      const raw = String(value).trim();
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+        if (parsed && typeof parsed === 'object') return Object.entries(parsed).filter(([, v]) => Boolean(v)).map(([k]) => k);
+      } catch (e) {}
+      return raw.split(/\n|,|\||;/).map(x => x.trim()).filter(Boolean);
+    }
+
+    function heartIcon(active=false) {
+      const size = active ? 58 : 48;
+      const anchor = active ? [29,50] : [24,42];
+      return L.divIcon({
+        className:'loh-heart-div-icon',
+        html:'<div class="loh-heart-pin' + (active ? ' active' : '') + '"><span>♥</span></div>',
+        iconSize:[size,size],
+        iconAnchor:anchor,
+        popupAnchor:[0,-44]
+      });
+    }
     function userIcon() { return L.divIcon({ className:'loh-user-div-icon', html:'<div class="loh-user-marker">📍</div>', iconSize:[42,42], iconAnchor:[21,21] }); }
 
     const style = document.createElement('style');
-    style.textContent = '.loh-heart-marker{display:grid;place-items:center;width:44px;height:44px;border-radius:999px;background:linear-gradient(135deg,#f7d66b,#d4af37);border:2px solid rgba(255,255,255,.78);box-shadow:0 12px 24px rgba(0,0,0,.28);color:#071827;font-size:25px;font-weight:950}.loh-heart-marker.active{transform:scale(1.16);box-shadow:0 0 0 10px rgba(239,205,114,.18),0 16px 30px rgba(0,0,0,.32)}.loh-user-marker{display:grid;place-items:center;width:42px;height:42px;border-radius:999px;background:#fff;border:3px solid #2f80ed;box-shadow:0 12px 28px rgba(0,0,0,.26);font-size:20px}.loh-popup .loh-map-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.loh-popup .loh-map-actions a,.loh-popup .loh-map-actions button{border:1px solid rgba(239,205,114,.28);border-radius:999px;background:rgba(212,175,55,.08);color:#f5f1e8;padding:8px 10px;font-weight:900;text-decoration:none;font:inherit;cursor:pointer}.loh-map-fallback{display:grid;place-items:center;text-align:center;min-height:420px;padding:32px;color:#f5f1e8}';
+    style.textContent = `.loh-heart-div-icon{background:transparent!important;border:0!important}.loh-heart-pin{position:relative;width:48px;height:48px;display:grid;place-items:center;filter:drop-shadow(0 14px 18px rgba(0,0,0,.34))}.loh-heart-pin:before{content:"";position:absolute;inset:4px 4px 9px 4px;background:linear-gradient(135deg,#f8d96f,#d4af37 52%,#a87515);border:2px solid rgba(255,255,255,.9);border-radius:52% 52% 52% 0;transform:rotate(-45deg);box-shadow:inset 0 1px 10px rgba(255,255,255,.28),0 0 0 4px rgba(7,24,39,.28)}.loh-heart-pin:after{content:"";position:absolute;left:50%;bottom:0;width:8px;height:8px;background:#a87515;border-right:2px solid rgba(255,255,255,.75);border-bottom:2px solid rgba(255,255,255,.75);transform:translateX(-50%) rotate(45deg);border-radius:0 0 3px 0}.loh-heart-pin span{position:relative;z-index:2;color:#071827;font-size:24px;font-weight:950;transform:translateY(-2px);text-shadow:0 1px 0 rgba(255,255,255,.4)}.loh-heart-pin.active{width:58px;height:58px;animation:lohPinPulse 1.8s ease-in-out infinite}.loh-heart-pin.active:before{background:linear-gradient(135deg,#fff2a8,#efcd72 48%,#bd8b24);box-shadow:inset 0 1px 12px rgba(255,255,255,.36),0 0 0 8px rgba(239,205,114,.18),0 0 28px rgba(239,205,114,.28)}.loh-heart-pin.active span{font-size:28px}@keyframes lohPinPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}.loh-user-marker{display:grid;place-items:center;width:42px;height:42px;border-radius:999px;background:#fff;border:3px solid #2f80ed;box-shadow:0 12px 28px rgba(0,0,0,.26);font-size:20px}.loh-popup .loh-map-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.loh-popup .loh-map-actions a,.loh-popup .loh-map-actions button{border:1px solid rgba(239,205,114,.28);border-radius:999px;background:rgba(212,175,55,.08);color:#f5f1e8;padding:8px 10px;font-weight:900;text-decoration:none;font:inherit;cursor:pointer}.loh-card-icons{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.loh-card-icons span{border:1px solid rgba(239,205,114,.22);border-radius:999px;background:rgba(212,175,55,.08);padding:5px 8px;font-size:.8rem}.loh-map-fallback{display:grid;place-items:center;text-align:center;min-height:420px;padding:32px;color:#f5f1e8}`;
     document.head.appendChild(style);
 
     function coordsFor(b, index) { if (b.latitude && b.longitude) return [Number(b.latitude), Number(b.longitude)]; return fallback[index % fallback.length]; }
     function escapeText(value) { return String(value || '').replace(/[&<>"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[char])); }
     function directionsUrl(b) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([b.address,b.city,'Florida'].filter(Boolean).join(', ')); }
-    function iconsFor(b) { const list = Array.isArray(b.badges) ? b.badges : []; return '<div class="loh-card-icons"><span>❤️ Member</span>' + list.map(key => '<span>' + (badgeIcon[key] || '❤️') + '</span>').join('') + '</div>'; }
+    function iconsFor(b) { const list = [...toList(b.badges), ...toList(b.recognition_badges)]; return '<div class="loh-card-icons"><span>❤️ Member</span>' + list.map(key => '<span>' + (badgeIcon[key] || key || '❤️') + '</span>').join('') + (b.sponsor_level ? '<span>' + escapeText(b.sponsor_level) + '</span>' : '') + '</div>'; }
     function popupFor(b, index) {
       const desc = escapeText(b.public_description || b.description || 'Affirming business listing.');
       const place = escapeText([b.address, b.city].filter(Boolean).join(', '));
