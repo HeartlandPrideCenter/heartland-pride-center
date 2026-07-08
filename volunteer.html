@@ -38,8 +38,18 @@
     <section class="intake-form" aria-label="Volunteer interest form">
       <p class="eyebrow">Volunteer interest</p>
       <h2>Tell us how you want to help.</h2>
-      <p class="form-note">Use this secure Google Form if you are interested in outreach, events, committees, resource research, creative help, service projects, or future volunteer opportunities.</p>
-      <div class="form-actions"><a class="btn primary" href="https://docs.google.com/forms/d/e/1FAIpQLScNmt10P7pyMo8wqBSNWOGpBWqrDrAlJXj43bzDX7CFkt_Tsg/viewform?usp=publish-editor" target="_blank" rel="noopener">Open Volunteer Form</a><p class="privacy-line">Responses are collected in HPC's volunteer interest spreadsheet.</p></div>
+      <p class="form-note">This form now feeds directly into the Atlas HQ Volunteer inbox so your interest does not get lost while HPC systems are being built.</p>
+      <form class="form-grid" id="volunteerInterestForm">
+        <div class="form-field"><label for="volName">Full Name *</label><input id="volName" autocomplete="name" required></div>
+        <div class="form-field"><label for="volEmail">Email *</label><input id="volEmail" type="email" autocomplete="email" required></div>
+        <div class="form-field"><label for="volPhone">Phone</label><input id="volPhone" inputmode="tel" autocomplete="tel"></div>
+        <div class="form-field"><label for="volCity">City</label><input id="volCity" autocomplete="address-level2"></div>
+        <div class="form-field full"><label for="volInterests">How would you like to help? *</label><textarea id="volInterests" required placeholder="Outreach, events, resource research, creative help, committees, service projects, etc."></textarea></div>
+        <div class="form-field full"><label for="volAvailability">Availability</label><textarea id="volAvailability" placeholder="Weekends, evenings, occasional events, remote help, etc."></textarea></div>
+        <div class="form-field full"><label for="volExperience">Skills, lived experience, or notes</label><textarea id="volExperience" placeholder="Anything you want HPC to know."></textarea></div>
+        <button class="btn primary" type="submit">Submit Volunteer Interest</button>
+        <p class="privacy-line" id="volunteerMessage">Submissions are routed to the Volunteer inbox in Atlas HQ.</p>
+      </form>
     </section>
 
     <section class="callout"><p class="eyebrow">No perfect resume required</p><h2>There is a place for builders, helpers, organizers, listeners, and connectors.</h2><p>HPC needs people who care enough to show up. Whether you have professional experience, lived experience, creative skills, administrative strength, or simply a steady heart, there is room to help grow this work.</p></section>
@@ -47,5 +57,28 @@
 
   <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="contact.html">Contact</a></div></footer>
   <script src="script.js"></script>
+  <script src="hpc-data-source.js?v=atlas-intake-20260708"></script>
+  <script>
+    const apiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
+    const apiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
+    const ready = Boolean(apiBase && apiKey && !apiKey.includes('ADD_PUBLIC_TOKEN'));
+    const headers = (extra={}) => Object.assign({apikey: apiKey, Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'}, extra);
+    volunteerInterestForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      volunteerMessage.innerHTML = '<strong>Submitting...</strong>';
+      if (!ready) { volunteerMessage.innerHTML = '<strong>Connection issue.</strong> Please email info@heartlandpridecenter.org.'; return; }
+      const notes = [`Interests: ${volInterests.value.trim()}`, `Availability: ${volAvailability.value.trim() || 'not provided'}`, `Experience/notes: ${volExperience.value.trim() || 'not provided'}`].join('\n');
+      const payload = {type:'volunteer', status:'new', organization_name:volName.value.trim(), contact_name:volName.value.trim(), email:volEmail.value.trim(), phone:volPhone.value.trim(), category:'Volunteer Interest', city:volCity.value.trim(), county:'Polk', description:volInterests.value.trim(), notes};
+      try {
+        const res = await fetch(apiBase + '/applications', {method:'POST', headers:headers({Prefer:'return=minimal'}), body:JSON.stringify(payload)});
+        if (!res.ok) throw new Error('insert failed');
+        volunteerInterestForm.reset();
+        volunteerMessage.innerHTML = '<strong>❤️ Volunteer interest received.</strong> Your information has been sent to the HPC Volunteer inbox.';
+      } catch (err) {
+        console.error(err);
+        volunteerMessage.innerHTML = '<strong>Submission issue.</strong> Please email info@heartlandpridecenter.org so we do not miss you.';
+      }
+    });
+  </script>
 </body>
 </html>
