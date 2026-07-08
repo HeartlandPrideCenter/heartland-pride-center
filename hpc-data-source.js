@@ -8,32 +8,6 @@ if (window.location.pathname.includes('business-network')) {
   document.head.appendChild(cardsScript);
 }
 
-if (window.location.pathname.includes('staff')) {
-  const version = 'v3-20260708-1';
-  const v3Styles = document.createElement('link');
-  v3Styles.rel = 'stylesheet';
-  v3Styles.href = 'backstage-business-network-v3.css?v=' + version;
-  document.head.appendChild(v3Styles);
-
-  const scripts = [
-    'heartland-os-version.js',
-    'heartland-os-collab-tools.js',
-    'backstage-business-coordinates.js',
-    'backstage-business-network-overrides.js',
-    'backstage-business-editor.js',
-    'backstage-business-workflow-v2.js',
-    'backstage-business-manager.js',
-    'backstage-business-network-v3-lite.js'
-  ];
-
-  function loadBackstageScript(index = 0) {
-    if (index >= scripts.length) return;
-    const script = document.createElement('script');
-    script.src = scripts[index] + '?v=' + version;
-    script.onload = () => loadBackstageScript(index + 1);
-    script.onerror = () => console.error('Backstage script failed to load:', scripts[index]);
-    document.head.appendChild(script);
-  }
-
-  loadBackstageScript();
-}
+// Staff portal now runs its Business Network Manager directly from staff.html.
+// Legacy Backstage experiment scripts are intentionally not loaded here so the
+// completed Business Network workflow stays clean and predictable.
