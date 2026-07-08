@@ -9,7 +9,12 @@ if (window.location.pathname.includes('business-network')) {
 }
 
 if (window.location.pathname.includes('staff')) {
-  const version = 'v2-20260704-1';
+  const version = 'v3-20260708-1';
+  const v3Styles = document.createElement('link');
+  v3Styles.rel = 'stylesheet';
+  v3Styles.href = 'backstage-business-network-v3.css?v=' + version;
+  document.head.appendChild(v3Styles);
+
   const scripts = [
     'heartland-os-version.js',
     'heartland-os-collab-tools.js',
