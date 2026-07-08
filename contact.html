@@ -26,24 +26,25 @@
     </section>
 
     <section class="feature-panel page-section">
-      <div>
-        <p class="eyebrow">Email</p>
-        <h2>info@heartlandpridecenter.org</h2>
-      </div>
-      <div>
-        <p>Email is still the best direct way to reach Heartland Pride Center while programs, directory tools, and outreach systems continue to grow.</p>
-        <div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div>
-      </div>
+      <div><p class="eyebrow">Email</p><h2>info@heartlandpridecenter.org</h2></div>
+      <div><p>Email is still available, but this form now routes public inquiries directly into the Atlas HQ department inboxes.</p><div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div></div>
     </section>
 
     <section class="intake-form" aria-label="Contact form">
       <p class="eyebrow">Contact form</p>
       <h2>Tell us what you need or how you want to connect.</h2>
-      <p class="form-note">This secure Google Form is for general contact, support questions, partnership ideas, volunteer interest, and resource directory inquiries. Responses are collected in HPC's response spreadsheet.</p>
-      <div class="form-actions">
-        <a class="btn primary" href="https://docs.google.com/forms/d/e/1FAIpQLSctje-b_dgjlBEk8FUUfdxjh6lCJf4akxCfAOwzSYANGZ6dUg/viewform?usp=header" target="_blank" rel="noopener">Open Contact Form</a>
-        <p class="privacy-line">Please avoid sharing highly sensitive details through this general web form.</p>
-      </div>
+      <p class="form-note">This form feeds directly into Atlas HQ so inquiries can be routed, tracked, and addressed.</p>
+      <form class="form-grid" id="contactIntakeForm">
+        <div class="form-field"><label for="contactName">Name *</label><input id="contactName" autocomplete="name" required></div>
+        <div class="form-field"><label for="contactEmail">Email *</label><input id="contactEmail" type="email" autocomplete="email" required></div>
+        <div class="form-field"><label for="contactPhone">Phone</label><input id="contactPhone" inputmode="tel" autocomplete="tel"></div>
+        <div class="form-field"><label for="contactCity">City</label><input id="contactCity" autocomplete="address-level2"></div>
+        <div class="form-field"><label for="contactDepartment">What is this about? *</label><select id="contactDepartment" required><option value="contact">General Contact</option><option value="resources">I need help / resources</option><option value="partners">Partnership or collaboration</option><option value="volunteers">Volunteer interest</option><option value="events">Event idea or request</option><option value="business">Business or directory inquiry</option></select></div>
+        <div class="form-field"><label for="contactFollowup">Preferred follow-up</label><select id="contactFollowup"><option>Email</option><option>Phone</option></select></div>
+        <div class="form-field full"><label for="contactMessage">Message *</label><textarea id="contactMessage" required placeholder="Tell us what you need, what you are offering, or how you would like to connect."></textarea></div>
+        <button class="btn primary" type="submit">Send to HPC</button>
+        <p class="privacy-line" id="contactMessageStatus">Please avoid sharing highly sensitive details through this general web form.</p>
+      </form>
     </section>
 
     <section class="page-section">
@@ -55,14 +56,35 @@
       </div>
     </section>
 
-    <section class="callout">
-      <p class="eyebrow">Serving</p>
-      <h2>Polk County and the surrounding Central Florida Heartland region.</h2>
-      <p>HPC is rooted in local connection and regional access. The goal is to make support easier to find, easier to trust, and easier to reach.</p>
-    </section>
+    <section class="callout"><p class="eyebrow">Serving</p><h2>Polk County and the surrounding Central Florida Heartland region.</h2><p>HPC is rooted in local connection and regional access. The goal is to make support easier to find, easier to trust, and easier to reach.</p></section>
   </main>
 
   <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="programs.html">Programs</a></div></footer>
   <script src="script.js"></script>
+  <script src="hpc-data-source.js?v=atlas-intake-20260708"></script>
+  <script>
+    const apiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
+    const apiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
+    const ready = Boolean(apiBase && apiKey && !apiKey.includes('ADD_PUBLIC_TOKEN'));
+    const headers = (extra={}) => Object.assign({apikey: apiKey, Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'}, extra);
+    const label = {contact:'General Contact', resources:'Resource Request', partners:'Partnership Inquiry', volunteers:'Volunteer Interest', events:'Event Request', business:'Business / Directory Inquiry'};
+    contactIntakeForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      contactMessageStatus.innerHTML = '<strong>Submitting...</strong>';
+      if (!ready) { contactMessageStatus.innerHTML = '<strong>Connection issue.</strong> Please email info@heartlandpridecenter.org.'; return; }
+      const type = contactDepartment.value;
+      const notes = [`Preferred follow-up: ${contactFollowup.value}`, `Routed department: ${label[type]}`, `Message: ${contactMessage.value.trim()}`].join('\n');
+      const payload = {type, status:'new', organization_name:contactName.value.trim(), contact_name:contactName.value.trim(), email:contactEmail.value.trim(), phone:contactPhone.value.trim(), category:label[type], city:contactCity.value.trim(), county:'Polk', description:contactMessage.value.trim(), notes};
+      try {
+        const res = await fetch(apiBase + '/applications', {method:'POST', headers:headers({Prefer:'return=minimal'}), body:JSON.stringify(payload)});
+        if (!res.ok) throw new Error('insert failed');
+        contactIntakeForm.reset();
+        contactMessageStatus.innerHTML = '<strong>❤️ Message received.</strong> Your inquiry has been routed to the correct HPC inbox.';
+      } catch (err) {
+        console.error(err);
+        contactMessageStatus.innerHTML = '<strong>Submission issue.</strong> Please email info@heartlandpridecenter.org so we do not miss you.';
+      }
+    });
+  </script>
 </body>
 </html>
