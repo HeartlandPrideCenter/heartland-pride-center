@@ -22,7 +22,8 @@ if (window.location.pathname.includes('staff')) {
     'backstage-business-network-overrides.js',
     'backstage-business-editor.js',
     'backstage-business-workflow-v2.js',
-    'backstage-business-manager.js'
+    'backstage-business-manager.js',
+    'backstage-business-network-v3-lite.js'
   ];
 
   function loadBackstageScript(index = 0) {
