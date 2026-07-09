@@ -8,6 +8,5 @@ if (window.location.pathname.includes('business-network')) {
   document.head.appendChild(cardsScript);
 }
 
-// Staff portal now runs its Business Network Manager directly from staff.html.
-// Legacy Backstage experiment scripts are intentionally not loaded here so the
-// completed Business Network workflow stays clean and predictable.
+// Staff portal foundation is locked.
+// Active build target: Business Department management workspace.
