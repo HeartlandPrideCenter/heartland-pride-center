@@ -14,6 +14,12 @@
     const masterRows = () => allRows().filter(r => tableFor(r.source) === 'businesses');
     const departmentRows = () => allRows().filter(r => tableFor(r.source) !== 'businesses');
     const matchMaster = row => masterRows().find(m => row.master_id && String(m.id) === String(row.master_id)) || masterRows().find(m => row.email && m.email && row.email.toLowerCase() === m.email.toLowerCase()) || masterRows().find(m => row.name && m.name && row.name.trim().toLowerCase() === m.name.trim().toLowerCase()) || null;
+    const masterType = row => {
+      const explicit = String(row.record_type || row.type || '').trim();
+      if (explicit) return explicit.replace(/\b\w/g, c => c.toUpperCase());
+      const match = String(row.notes || '').match(/Master Record Type:\s*([^\n]+)/i);
+      return match ? match[1].trim() : 'Organization';
+    };
 
     async function request(table,method,id,payload){
       const response=await fetch(`${window.HPC_DATA_URL}/rest/v1/${table}${id==null?'':`?id=eq.${encodeURIComponent(id)}`}`,{method,headers:apiHeaders(method==='PATCH'?'return=minimal':'return=representation'),body:payload?JSON.stringify(payload):undefined});
@@ -23,21 +29,71 @@
     }
 
     const style=document.createElement('style');style.textContent=`
-      .registry-shell{display:grid;grid-template-columns:260px 1fr;gap:14px}.registry-filter,.registry-main{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.05);padding:15px}.registry-filter{position:sticky;top:16px;align-self:start}.registry-list{display:grid;gap:8px}.registry-row{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;padding:14px;background:rgba(255,255,255,.035);color:var(--cream);display:grid;grid-template-columns:1fr auto;gap:12px;cursor:pointer}.registry-row:hover{border-color:rgba(240,206,115,.55)}.registry-row small{display:block;color:var(--muted);margin-top:4px}.registry-tools{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.workspace-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:rgba(255,255,255,.035)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field textarea{min-height:110px}.record-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}.record-meta small{display:block;color:var(--muted);margin-bottom:5px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}@media(max-width:900px){.registry-shell,.work-grid,.record-meta{grid-template-columns:1fr}.registry-filter{position:static}}`;
+      .registry-shell{display:grid;grid-template-columns:260px 1fr;gap:14px}.registry-filter,.registry-main{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.05);padding:15px}.registry-filter{position:sticky;top:16px;align-self:start}.registry-list{display:grid;gap:8px}.registry-row{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;padding:14px;background:rgba(255,255,255,.035);color:var(--cream);display:grid;grid-template-columns:1fr auto;gap:12px;cursor:pointer}.registry-row:hover{border-color:rgba(240,206,115,.55)}.registry-row small{display:block;color:var(--muted);margin-top:4px}.registry-tools{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.workspace-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:rgba(255,255,255,.035)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field textarea{min-height:110px}.record-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}.record-meta small{display:block;color:var(--muted);margin-bottom:5px}.master-purpose{color:var(--muted);line-height:1.55;margin:.65rem 0 0}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}@media(max-width:900px){.registry-shell,.work-grid,.record-meta{grid-template-columns:1fr}.registry-filter{position:static}}`;
     document.head.appendChild(style);
 
     const nav=document.querySelector('.nav');const businessButton=nav?.querySelector('[data-view="business"]');let masterButton=nav?.querySelector('[data-view="masters"]');
     if(nav&&businessButton&&!masterButton){masterButton=document.createElement('button');masterButton.className='btn';masterButton.dataset.view='masters';masterButton.textContent='Master Records';nav.insertBefore(masterButton,businessButton);}
     const businessSection=$('business');if(!businessSection)return;let masterSection=$('masters');if(!masterSection){masterSection=document.createElement('section');masterSection.className='section';masterSection.id='masters';businessSection.parentNode.insertBefore(masterSection,businessSection);}
 
+    const searchBox=$('searchBox');
+    const statusFilter=$('statusFilter');
+    const sourceFilter=$('sourceFilter');
+    const searchPanel=$('searchPanel');
+    const manualTop=$('manualTop');
+    const statusLabel=statusFilter?.closest('.field')?.querySelector('label');
+    const originalStatusHTML=statusFilter?.innerHTML || '';
+    const originalStatusLabel=statusLabel?.textContent || 'Status';
+    const originalSearchPlaceholder=searchBox?.placeholder || '';
+    let masterMode=false;
+
+    function enterMasterMode(){
+      masterMode=true;
+      if(manualTop)manualTop.style.display='none';
+      if(searchPanel)searchPanel.style.display='block';
+      if(searchBox)searchBox.placeholder='Name, address, email, phone...';
+      if(statusLabel)statusLabel.textContent='Record Type';
+      if(statusFilter){
+        statusFilter.innerHTML='<option value="all">All Record Types</option><option value="organization">Organization</option><option value="person">Person</option><option value="partner">Partner</option><option value="event">Event</option><option value="resource">Resource</option><option value="other">Other</option>';
+        statusFilter.value='all';
+      }
+      const eyebrow=searchPanel?.querySelector('.eyebrow');
+      if(eyebrow)eyebrow.textContent='Search Master Records';
+    }
+
+    function leaveMasterMode(){
+      if(!masterMode)return;
+      masterMode=false;
+      if(manualTop)manualTop.style.removeProperty('display');
+      if(searchBox)searchBox.placeholder=originalSearchPlaceholder;
+      if(statusLabel)statusLabel.textContent=originalStatusLabel;
+      if(statusFilter){statusFilter.innerHTML=originalStatusHTML;statusFilter.value='all';}
+      const eyebrow=searchPanel?.querySelector('.eyebrow');
+      if(eyebrow)eyebrow.textContent='Search & Sort';
+    }
+
     function showSection(id,title,intro){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('.nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if($('pageTitle'))$('pageTitle').textContent=title;if($('pageIntro'))$('pageIntro').textContent=intro;}
-    let masterFilter='all',businessFilter='all';
+    let businessFilter='all';
     function field(id,label,value='',type='text',readonly=false){const ro=readonly?' readonly':'';const control=type==='textarea'?`<textarea id="${id}"${ro}>${esc(value)}</textarea>`:`<input id="${id}" type="${type}" value="${esc(value)}"${ro}>`;return `<div class="work-field"><label for="${id}">${esc(label)}</label>${control}</div>`;}
 
     function renderMasterRegistry(){
-      const rows=masterRows();masterSection.innerHTML=`<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Shared Identity</span><div class="field"><label>Search</label><input id="masterSearch" placeholder="Name, email, phone, address..."></div><div class="filter-stack"><button class="btn filter-btn ${masterFilter==='all'?'primary':''}" data-master-filter="all"><span>All</span><span>${rows.length}</span></button><button class="btn filter-btn ${masterFilter==='active'?'primary':''}" data-master-filter="active"><span>Active</span><span>${rows.filter(r=>normalizeStatus(r.status)!=='archived').length}</span></button><button class="btn filter-btn ${masterFilter==='archived'?'primary':''}" data-master-filter="archived"><span>Archived</span><span>${rows.filter(r=>normalizeStatus(r.status)==='archived').length}</span></button></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Registry</span><h2 style="margin:.25rem 0">Organizations</h2><p style="color:var(--muted);margin:0">Shared identity only. Department work is kept out of this registry.</p></div><button class="btn primary" id="addMasterRecord">Add Organization</button></div><div class="registry-list" id="masterRegistryList"></div></div></div>`;
-      const search=$('masterSearch'),list=$('masterRegistryList');const draw=()=>{const q=search.value.trim().toLowerCase();const filtered=rows.filter(r=>(masterFilter==='all'||(masterFilter==='archived'?normalizeStatus(r.status)==='archived':normalizeStatus(r.status)!=='archived'))&&(!q||[r.name,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q)));list.innerHTML=filtered.length?filtered.map(r=>`<button class="registry-row" data-master-id="${esc(r.id)}"><span><strong>${esc(r.name||'Unnamed organization')}</strong><small>${esc([r.address,r.city,r.email,r.phone].filter(Boolean).join(' · '))}</small></span><span class="status ${normalizeStatus(r.status)}">${esc(normalizeStatus(r.status))}</span></button>`).join(''):'<div class="empty">No master records match this view.</div>';list.querySelectorAll('[data-master-id]').forEach(b=>b.onclick=()=>openMasterWorkspace(b.dataset.masterId));};
-      search.addEventListener('input',draw);masterSection.querySelectorAll('[data-master-filter]').forEach(b=>b.onclick=()=>{masterFilter=b.dataset.masterFilter;renderMasterRegistry();});$('addMasterRecord').onclick=()=>openMasterWorkspace(null);draw();
+      const rows=masterRows();
+      masterSection.innerHTML=`<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Shared Filing Cabinet</span><p class="master-purpose">Master records are created and maintained here, then used by every department that needs to open its own department file.</p></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Registry</span><h2 style="margin:.25rem 0">Master Records</h2><p style="color:var(--muted);margin:0">Shared identity records available to all departments.</p></div><button class="btn primary" id="addMasterRecord">Add Master Record</button></div><div class="registry-list" id="masterRegistryList"></div></div></div>`;
+      const list=$('masterRegistryList');
+      const draw=()=>{
+        const q=String(searchBox?.value||'').trim().toLowerCase();
+        const type=String(statusFilter?.value||'all').toLowerCase();
+        const source=String(sourceFilter?.value||'all');
+        const filtered=rows.filter(r=>(type==='all'||masterType(r).toLowerCase()===type)&&(source==='all'||String(r.source)===source)&&(!q||[r.name,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q)));
+        list.innerHTML=filtered.length?filtered.map(r=>`<button class="registry-row" data-master-id="${esc(r.id)}"><span><strong>${esc(r.name||'Unnamed master record')}</strong><small>${esc(masterType(r))}</small><small>${esc([r.address,r.city,r.email,r.phone].filter(Boolean).join(' · '))}</small></span><span class="chip">${esc(masterType(r))}</span></button>`).join(''):'<div class="empty">No master records match this search.</div>';
+        list.querySelectorAll('[data-master-id]').forEach(b=>b.onclick=()=>openMasterWorkspace(b.dataset.masterId));
+      };
+      searchBox?.addEventListener('input',draw);
+      statusFilter?.addEventListener('change',draw);
+      sourceFilter?.addEventListener('change',draw);
+      $('clearFilters')?.addEventListener('click',()=>setTimeout(draw,0));
+      $('addMasterRecord').onclick=()=>openMasterWorkspace(null);
+      draw();
     }
 
     function renderBusinessRegistry(){
@@ -49,8 +105,8 @@
     function activateModalTab(name){document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.workspace-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===name));}
 
     function openMasterWorkspace(id){
-      const row=id==null?null:masterRows().find(r=>String(r.id)===String(id));$('modalEyebrow').textContent='Master Record';$('modalTitle').textContent=row?row.name:'New Organization';$('modalSub').textContent=row?`Organization ID ${row.id}`:'Create shared identity record';$('modalBody').innerHTML=`<div class="workspace-tabs"><button class="btn active" data-tab="identity">Identity</button><button class="btn" data-tab="contacts">Contact</button><button class="btn" data-tab="administration">Administration</button></div><section class="workspace-pane active" data-pane="identity"><div class="work-grid"><div class="work-card"><span class="eyebrow">Identity</span><h3>Organization</h3>${field('mName','Organization Name',row?.name)}${field('mWebsite','Website',row?.website)}${field('mAddress','Physical Address',row?.address)}${field('mCity','City',row?.city)}</div><div class="work-card"><span class="eyebrow">Mailing</span><h3>Shared address information</h3>${field('mMailing','Mailing Address',row?.mailing_address||row?.address)}${field('mState','State',row?.state||'FL')}${field('mZip','ZIP Code',row?.zip||row?.postal_code)}</div></div></section><section class="workspace-pane" data-pane="contacts"><div class="work-grid"><div class="work-card">${field('mContact','Primary Contact',row?.contact)}${field('mEmail','Primary Email',row?.email,'email')}${field('mPhone','Primary Phone',row?.phone)}</div><div class="work-card"><div class="notice">Shared contact information only. Department notes, badges, publishing, applications, and workflow stay in department records.</div></div></div></section><section class="workspace-pane" data-pane="administration"><div class="work-card"><div class="record-meta"><div><small>Master ID</small><strong>${esc(row?.id||'Created when saved')}</strong></div><div><small>Status</small><strong>${esc(normalizeStatus(row?.status||'active'))}</strong></div><div><small>Source</small><strong>Master Registry</strong></div></div><div class="ops-actions" style="margin-top:14px"><button class="btn primary" id="saveMaster">${row?'Save Master Record':'Create Master Record'}</button>${row?`<button class="btn danger" id="archiveMaster">${normalizeStatus(row.status)==='archived'?'Restore':'Archive'}</button>`:''}</div></div></section>`;$('modalBackdrop').classList.add('open');document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.onclick=()=>activateModalTab(b.dataset.tab));
-      $('saveMaster').onclick=async()=>{const payload={name:$('mName').value.trim(),website:$('mWebsite').value.trim(),address:$('mAddress').value.trim(),city:$('mCity').value.trim(),email:$('mEmail').value.trim(),phone:$('mPhone').value.trim(),contact_name:$('mContact').value.trim(),status:normalizeStatus(row?.status||'active')};if(!payload.name)return alert('Organization name is required.');try{row?await request('businesses','PATCH',row.id,payload):await request('businesses','POST',null,payload);window.showToast?.('Master record saved.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not save master record: ${e.message}`);}};
+      const row=id==null?null:masterRows().find(r=>String(r.id)===String(id));$('modalEyebrow').textContent='Master Record';$('modalTitle').textContent=row?row.name:'New Master Record';$('modalSub').textContent=row?`Master Record ${row.id}`:'Create shared identity record';$('modalBody').innerHTML=`<div class="workspace-tabs"><button class="btn active" data-tab="identity">Identity</button><button class="btn" data-tab="contacts">Contact</button><button class="btn" data-tab="administration">Administration</button></div><section class="workspace-pane active" data-pane="identity"><div class="work-grid"><div class="work-card"><span class="eyebrow">Identity</span><h3>Master Record</h3>${field('mName','Name',row?.name)}${field('mWebsite','Website',row?.website)}${field('mAddress','Physical Address',row?.address)}${field('mCity','City',row?.city)}</div><div class="work-card"><span class="eyebrow">Mailing</span><h3>Shared address information</h3>${field('mMailing','Mailing Address',row?.mailing_address||row?.address)}${field('mState','State',row?.state||'FL')}${field('mZip','ZIP Code',row?.zip||row?.postal_code)}</div></div></section><section class="workspace-pane" data-pane="contacts"><div class="work-grid"><div class="work-card">${field('mContact','Primary Contact',row?.contact)}${field('mEmail','Primary Email',row?.email,'email')}${field('mPhone','Primary Phone',row?.phone)}</div><div class="work-card"><div class="notice">Shared contact information only. Department notes, badges, publishing, applications, and workflow stay in department records.</div></div></div></section><section class="workspace-pane" data-pane="administration"><div class="work-card"><div class="record-meta"><div><small>Master ID</small><strong>${esc(row?.id||'Created when saved')}</strong></div><div><small>Status</small><strong>${esc(normalizeStatus(row?.status||'active'))}</strong></div><div><small>Source</small><strong>Master Registry</strong></div></div><div class="ops-actions" style="margin-top:14px"><button class="btn primary" id="saveMaster">${row?'Save Master Record':'Create Master Record'}</button>${row?`<button class="btn danger" id="archiveMaster">${normalizeStatus(row.status)==='archived'?'Restore':'Archive'}</button>`:''}</div></div></section>`;$('modalBackdrop').classList.add('open');document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.onclick=()=>activateModalTab(b.dataset.tab));
+      $('saveMaster').onclick=async()=>{const payload={name:$('mName').value.trim(),website:$('mWebsite').value.trim(),address:$('mAddress').value.trim(),city:$('mCity').value.trim(),email:$('mEmail').value.trim(),phone:$('mPhone').value.trim(),contact_name:$('mContact').value.trim(),status:normalizeStatus(row?.status||'active')};if(!payload.name)return alert('Name is required.');try{row?await request('businesses','PATCH',row.id,payload):await request('businesses','POST',null,payload);window.showToast?.('Master record saved.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not save master record: ${e.message}`);}};
       $('archiveMaster')?.addEventListener('click',async()=>{const status=normalizeStatus(row.status)==='archived'?'active':'archived';try{await request('businesses','PATCH',row.id,{status});window.showToast?.(`Master record ${status==='archived'?'archived':'restored'}.`);$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not update master record: ${e.message}`);}});
     }
 
@@ -59,7 +115,8 @@
       const payload=()=>({name:$('bName').value.trim(),contact_name:$('bContact').value.trim(),email:$('bEmail').value.trim(),phone:$('bPhone').value.trim(),website:$('bWebsite').value.trim(),address:$('bAddress').value.trim(),city:$('bCity').value.trim(),category:$('bCategory').value.trim(),description:$('bDescription').value.trim(),notes:$('bNotes').value.trim(),status:$('bnStatus').value});const save=async(extra={},message='Business Network record saved.')=>{try{const table=tableFor(row.source);if(!table)throw new Error('Unsupported record source');await request(table,'PATCH',row.id,{...payload(),...extra});window.showToast?.(message);$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderBusinessRegistry,650);}catch(e){alert(`Could not save record: ${e.message}`);}};$('saveDepartment').onclick=()=>save();$('saveNotes').onclick=()=>save({},'Notes saved.');$('publishBusiness').onclick=()=>save({status:'published'},'Business listing published.');$('hideBusiness').onclick=()=>save({status:'hidden'},'Business listing hidden.');
     }
 
-    masterButton?.addEventListener('click',()=>{showSection('masters','Master Records','Shared identity records only. Department work remains in department-owned registries.');renderMasterRegistry();});
+    masterButton?.addEventListener('click',()=>{enterMasterMode();showSection('masters','Master Records','Shared identity records only. Department work remains in department-owned registries.');renderMasterRegistry();});
+    document.querySelectorAll('.nav [data-view]:not([data-view="masters"])').forEach(button=>button.addEventListener('click',leaveMasterMode));
     businessButton?.addEventListener('click',()=>setTimeout(renderBusinessRegistry,0));
     renderMasterRegistry();renderBusinessRegistry();
   });
