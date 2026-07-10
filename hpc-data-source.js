@@ -11,15 +11,10 @@ if (window.location.pathname.includes('business-network')) {
 if (window.location.pathname.includes('staff')) {
   window.addEventListener('DOMContentLoaded', () => {
     const operationalScript = document.createElement('script');
-    operationalScript.src = 'staff-business-operational.js?v=master-registry-production-20260710';
-    operationalScript.onload = () => {
-      const masterSurfaceScript = document.createElement('script');
-      masterSurfaceScript.src = 'staff-master-surface.js?v=master-surface-refinement-20260710';
-      document.body.appendChild(masterSurfaceScript);
-    };
+    operationalScript.src = 'staff-business-operational.js?v=master-surface-clean-20260710';
     document.body.appendChild(operationalScript);
   }, { once: true });
 }
 
 // Production foundation: shared master identity records plus department-owned work records.
-// Active refinement: universal master filing cabinet and Business Network department.
+// Master Records refinements are integrated directly into the working program.
