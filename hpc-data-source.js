@@ -11,10 +11,10 @@ if (window.location.pathname.includes('business-network')) {
 if (window.location.pathname.includes('staff')) {
   window.addEventListener('DOMContentLoaded', () => {
     const operationalScript = document.createElement('script');
-    operationalScript.src = 'staff-business-operational.js?v=master-surface-clean-20260710';
+    operationalScript.src = 'staff-business-operational.js?v=master-workspace-complete-20260710';
     document.body.appendChild(operationalScript);
   }, { once: true });
 }
 
 // Production foundation: shared master identity records plus department-owned work records.
-// Master Records refinements are integrated directly into the working program.
+// Master Records workspace is integrated directly into the working program.
