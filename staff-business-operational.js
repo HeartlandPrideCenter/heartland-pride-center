@@ -4,180 +4,63 @@
     if (!window.HPC_DATA_URL || !window.HPC_DATA_PUBLIC_TOKEN || typeof window.businessRecords !== 'function') return;
 
     const $ = id => document.getElementById(id);
-    const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const esc = value => String(value ?? '').replace(/[<>"'&]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     const token = () => sessionStorage.getItem('hpcAtlasAccessToken') || window.HPC_DATA_PUBLIC_TOKEN;
-    const apiHeaders = (prefer = 'return=representation') => ({
-      apikey: window.HPC_DATA_PUBLIC_TOKEN,
-      Authorization: `Bearer ${token()}`,
-      'Content-Type': 'application/json',
-      Prefer: prefer
-    });
+    const apiHeaders = (prefer = 'return=representation') => ({ apikey: window.HPC_DATA_PUBLIC_TOKEN, Authorization: `Bearer ${token()}`, 'Content-Type':'application/json', Prefer: prefer });
     const tableFor = source => source === 'applications' ? 'applications' : source === 'business_listings' ? 'business_listings' : String(source).startsWith('businesses') ? 'businesses' : '';
-    const normalizeStatus = value => {
-      const s = String(value || 'new').toLowerCase();
-      if (s === 'pending review') return 'in review';
-      if (s === 'pending') return 'waiting';
-      if (s === 'draft') return 'new';
-      return s;
-    };
+    const normalizeStatus = value => { const s = String(value || 'new').toLowerCase(); if (s === 'pending review') return 'in review'; if (s === 'pending') return 'waiting'; if (s === 'draft') return 'new'; return s; };
     const sourceKey = row => `${tableFor(row.source) || row.source}:${row.id}`;
-    const allRows = () => {
-      const seen = new Map();
-      window.businessRecords().forEach(row => {
-        const key = sourceKey(row);
-        if (!seen.has(key)) seen.set(key, row);
-      });
-      return [...seen.values()];
-    };
+    const allRows = () => { const seen = new Map(); window.businessRecords().forEach(row => { const key = sourceKey(row); if (!seen.has(key)) seen.set(key,row); }); return [...seen.values()]; };
     const masterRows = () => allRows().filter(r => tableFor(r.source) === 'businesses');
     const departmentRows = () => allRows().filter(r => tableFor(r.source) !== 'businesses');
-    const matchMaster = row => {
-      const masters = masterRows();
-      return masters.find(m => row.master_id && String(m.id) === String(row.master_id)) ||
-        masters.find(m => row.email && m.email && row.email.toLowerCase() === m.email.toLowerCase()) ||
-        masters.find(m => row.name && m.name && row.name.trim().toLowerCase() === m.name.trim().toLowerCase()) || null;
-    };
+    const matchMaster = row => masterRows().find(m => row.master_id && String(m.id) === String(row.master_id)) || masterRows().find(m => row.email && m.email && row.email.toLowerCase() === m.email.toLowerCase()) || masterRows().find(m => row.name && m.name && row.name.trim().toLowerCase() === m.name.trim().toLowerCase()) || null;
 
-    async function request(table, method, id, payload) {
-      const suffix = id == null ? '' : `?id=eq.${encodeURIComponent(id)}`;
-      const response = await fetch(`${window.HPC_DATA_URL}/rest/v1/${table}${suffix}`, {
-        method,
-        headers: apiHeaders(method === 'PATCH' ? 'return=minimal' : 'return=representation'),
-        body: payload ? JSON.stringify(payload) : undefined
-      });
-      if (!response.ok) throw new Error((await response.text()) || `${method} failed (${response.status})`);
-      if (method === 'PATCH' || response.status === 204) return null;
-      const data = await response.json();
-      return Array.isArray(data) ? data[0] : data;
+    async function request(table,method,id,payload){
+      const response=await fetch(`${window.HPC_DATA_URL}/rest/v1/${table}${id==null?'':`?id=eq.${encodeURIComponent(id)}`}`,{method,headers:apiHeaders(method==='PATCH'?'return=minimal':'return=representation'),body:payload?JSON.stringify(payload):undefined});
+      if(!response.ok)throw new Error((await response.text())||`${method} failed (${response.status})`);
+      if(method==='PATCH'||response.status===204)return null;
+      const data=await response.json();return Array.isArray(data)?data[0]:data;
     }
 
-    const style = document.createElement('style');
-    style.textContent = `
-      .registry-shell{display:grid;grid-template-columns:260px 1fr;gap:14px}.registry-filter,.registry-main{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.05);padding:15px}.registry-filter{position:sticky;top:16px;align-self:start}.registry-list{display:grid;gap:8px}.registry-row{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;padding:14px;background:rgba(255,255,255,.035);color:var(--cream);display:grid;grid-template-columns:1fr auto;gap:12px;cursor:pointer}.registry-row:hover{border-color:rgba(240,206,115,.55)}.registry-row small{display:block;color:var(--muted);margin-top:4px}.registry-tools{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.workspace-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:rgba(255,255,255,.035)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field textarea{min-height:110px}.record-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}.record-meta small{display:block;color:var(--muted);margin-bottom:5px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}@media(max-width:900px){.registry-shell,.work-grid,.record-meta{grid-template-columns:1fr}.registry-filter{position:static}}
-    `;
+    const style=document.createElement('style');style.textContent=`
+      .registry-shell{display:grid;grid-template-columns:260px 1fr;gap:14px}.registry-filter,.registry-main{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.05);padding:15px}.registry-filter{position:sticky;top:16px;align-self:start}.registry-list{display:grid;gap:8px}.registry-row{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;padding:14px;background:rgba(255,255,255,.035);color:var(--cream);display:grid;grid-template-columns:1fr auto;gap:12px;cursor:pointer}.registry-row:hover{border-color:rgba(240,206,115,.55)}.registry-row small{display:block;color:var(--muted);margin-top:4px}.registry-tools{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.workspace-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:rgba(255,255,255,.035)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field textarea{min-height:110px}.record-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}.record-meta small{display:block;color:var(--muted);margin-bottom:5px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}@media(max-width:900px){.registry-shell,.work-grid,.record-meta{grid-template-columns:1fr}.registry-filter{position:static}}`;
     document.head.appendChild(style);
 
-    const nav = document.querySelector('.nav');
-    const businessButton = nav?.querySelector('[data-view="business"]');
-    if (nav && businessButton && !nav.querySelector('[data-view="masters"]')) {
-      const button = document.createElement('button');
-      button.className = 'btn';
-      button.dataset.view = 'masters';
-      button.textContent = 'Master Records';
-      nav.insertBefore(button, businessButton);
-      if (window.deptNames) window.deptNames.masters = 'Master Records';
+    const nav=document.querySelector('.nav');const businessButton=nav?.querySelector('[data-view="business"]');let masterButton=nav?.querySelector('[data-view="masters"]');
+    if(nav&&businessButton&&!masterButton){masterButton=document.createElement('button');masterButton.className='btn';masterButton.dataset.view='masters';masterButton.textContent='Master Records';nav.insertBefore(masterButton,businessButton);}
+    const businessSection=$('business');if(!businessSection)return;let masterSection=$('masters');if(!masterSection){masterSection=document.createElement('section');masterSection.className='section';masterSection.id='masters';businessSection.parentNode.insertBefore(masterSection,businessSection);}
+
+    function showSection(id,title,intro){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('.nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if($('pageTitle'))$('pageTitle').textContent=title;if($('pageIntro'))$('pageIntro').textContent=intro;}
+    let masterFilter='all',businessFilter='all';
+    function field(id,label,value='',type='text',readonly=false){const ro=readonly?' readonly':'';const control=type==='textarea'?`<textarea id="${id}"${ro}>${esc(value)}</textarea>`:`<input id="${id}" type="${type}" value="${esc(value)}"${ro}>`;return `<div class="work-field"><label for="${id}">${esc(label)}</label>${control}</div>`;}
+
+    function renderMasterRegistry(){
+      const rows=masterRows();masterSection.innerHTML=`<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Shared Identity</span><div class="field"><label>Search</label><input id="masterSearch" placeholder="Name, email, phone, address..."></div><div class="filter-stack"><button class="btn filter-btn ${masterFilter==='all'?'primary':''}" data-master-filter="all"><span>All</span><span>${rows.length}</span></button><button class="btn filter-btn ${masterFilter==='active'?'primary':''}" data-master-filter="active"><span>Active</span><span>${rows.filter(r=>normalizeStatus(r.status)!=='archived').length}</span></button><button class="btn filter-btn ${masterFilter==='archived'?'primary':''}" data-master-filter="archived"><span>Archived</span><span>${rows.filter(r=>normalizeStatus(r.status)==='archived').length}</span></button></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Registry</span><h2 style="margin:.25rem 0">Organizations</h2><p style="color:var(--muted);margin:0">Shared identity only. Department work is kept out of this registry.</p></div><button class="btn primary" id="addMasterRecord">Add Organization</button></div><div class="registry-list" id="masterRegistryList"></div></div></div>`;
+      const search=$('masterSearch'),list=$('masterRegistryList');const draw=()=>{const q=search.value.trim().toLowerCase();const filtered=rows.filter(r=>(masterFilter==='all'||(masterFilter==='archived'?normalizeStatus(r.status)==='archived':normalizeStatus(r.status)!=='archived'))&&(!q||[r.name,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q)));list.innerHTML=filtered.length?filtered.map(r=>`<button class="registry-row" data-master-id="${esc(r.id)}"><span><strong>${esc(r.name||'Unnamed organization')}</strong><small>${esc([r.address,r.city,r.email,r.phone].filter(Boolean).join(' · '))}</small></span><span class="status ${normalizeStatus(r.status)}">${esc(normalizeStatus(r.status))}</span></button>`).join(''):'<div class="empty">No master records match this view.</div>';list.querySelectorAll('[data-master-id]').forEach(b=>b.onclick=()=>openMasterWorkspace(b.dataset.masterId));};
+      search.addEventListener('input',draw);masterSection.querySelectorAll('[data-master-filter]').forEach(b=>b.onclick=()=>{masterFilter=b.dataset.masterFilter;renderMasterRegistry();});$('addMasterRecord').onclick=()=>openMasterWorkspace(null);draw();
     }
 
-    const businessSection = $('business');
-    if (!businessSection) return;
-    let masterSection = $('masters');
-    if (!masterSection) {
-      masterSection = document.createElement('section');
-      masterSection.className = 'section';
-      masterSection.id = 'masters';
-      businessSection.parentNode.insertBefore(masterSection, businessSection);
+    function renderBusinessRegistry(){
+      const rows=departmentRows();businessSection.innerHTML=`<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Business Network</span><div class="field"><label>Search</label><input id="bnSearch" placeholder="Business name, category, city..."></div><div class="filter-stack" id="bnFilters"></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Department Registry</span><h2 style="margin:.25rem 0">Business Network Records</h2><p style="color:var(--muted);margin:0">Business Network owns these records and its public production.</p></div><button class="btn primary" id="addBusinessRecord">Add Business Record</button></div><div class="registry-list" id="bnList"></div></div></div>`;
+      const statuses=['all','new','in review','waiting','approved','published','active','declined','archived'];$('bnFilters').innerHTML=statuses.map(s=>`<button class="btn filter-btn ${businessFilter===s?'primary':''}" data-bn-filter="${s}"><span>${s==='all'?'All Records':s.replace(/\b\w/g,c=>c.toUpperCase())}</span><span>${rows.filter(r=>s==='all'||normalizeStatus(r.status)===s).length}</span></button>`).join('');$('bnFilters').querySelectorAll('[data-bn-filter]').forEach(b=>b.onclick=()=>{businessFilter=b.dataset.bnFilter;renderBusinessRegistry();});
+      const search=$('bnSearch'),list=$('bnList');const draw=()=>{const q=search.value.trim().toLowerCase();const filtered=rows.filter(r=>(businessFilter==='all'||normalizeStatus(r.status)===businessFilter)&&(!q||[r.name,r.category,r.city,r.email,r.phone].join(' ').toLowerCase().includes(q)));list.innerHTML=filtered.length?filtered.map(r=>{const master=matchMaster(r);return `<button class="registry-row" data-source="${esc(r.source)}" data-id="${esc(r.id)}"><span><strong>${esc(r.name||'Unnamed business')}</strong><small>${esc([r.category,r.city,r.email||r.phone].filter(Boolean).join(' · '))}</small><small>Master: ${esc(master?master.name:'Not linked')}</small></span><span class="status ${normalizeStatus(r.status).replace(/\s+/g,'-')}">${esc(normalizeStatus(r.status))}</span></button>`;}).join(''):'<div class="empty">No department records match this view.</div>';list.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>openBusinessWorkspace(b.dataset.source,b.dataset.id));};search.addEventListener('input',draw);$('addBusinessRecord').onclick=()=>$('manualBtn')?.click();draw();
     }
 
-    let masterFilter = 'all';
-    let businessFilter = 'all';
+    function activateModalTab(name){document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.workspace-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===name));}
 
-    function field(id, label, value = '', type = 'text', readonly = false) {
-      const ro = readonly ? ' readonly' : '';
-      return `<div class="work-field"><label for="${id}">${esc(label)}</label>${type === 'textarea' ? `<textarea id="${id}"${ro}>${esc(value)}</textarea>` : `<input id="${id}" type="${type}" value="${esc(value)}"${ro}></div>`;
+    function openMasterWorkspace(id){
+      const row=id==null?null:masterRows().find(r=>String(r.id)===String(id));$('modalEyebrow').textContent='Master Record';$('modalTitle').textContent=row?row.name:'New Organization';$('modalSub').textContent=row?`Organization ID ${row.id}`:'Create shared identity record';$('modalBody').innerHTML=`<div class="workspace-tabs"><button class="btn active" data-tab="identity">Identity</button><button class="btn" data-tab="contacts">Contact</button><button class="btn" data-tab="administration">Administration</button></div><section class="workspace-pane active" data-pane="identity"><div class="work-grid"><div class="work-card"><span class="eyebrow">Identity</span><h3>Organization</h3>${field('mName','Organization Name',row?.name)}${field('mWebsite','Website',row?.website)}${field('mAddress','Physical Address',row?.address)}${field('mCity','City',row?.city)}</div><div class="work-card"><span class="eyebrow">Mailing</span><h3>Shared address information</h3>${field('mMailing','Mailing Address',row?.mailing_address||row?.address)}${field('mState','State',row?.state||'FL')}${field('mZip','ZIP Code',row?.zip||row?.postal_code)}</div></div></section><section class="workspace-pane" data-pane="contacts"><div class="work-grid"><div class="work-card">${field('mContact','Primary Contact',row?.contact)}${field('mEmail','Primary Email',row?.email,'email')}${field('mPhone','Primary Phone',row?.phone)}</div><div class="work-card"><div class="notice">Shared contact information only. Department notes, badges, publishing, applications, and workflow stay in department records.</div></div></div></section><section class="workspace-pane" data-pane="administration"><div class="work-card"><div class="record-meta"><div><small>Master ID</small><strong>${esc(row?.id||'Created when saved')}</strong></div><div><small>Status</small><strong>${esc(normalizeStatus(row?.status||'active'))}</strong></div><div><small>Source</small><strong>Master Registry</strong></div></div><div class="ops-actions" style="margin-top:14px"><button class="btn primary" id="saveMaster">${row?'Save Master Record':'Create Master Record'}</button>${row?`<button class="btn danger" id="archiveMaster">${normalizeStatus(row.status)==='archived'?'Restore':'Archive'}</button>`:''}</div></div></section>`;$('modalBackdrop').classList.add('open');document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.onclick=()=>activateModalTab(b.dataset.tab));
+      $('saveMaster').onclick=async()=>{const payload={name:$('mName').value.trim(),website:$('mWebsite').value.trim(),address:$('mAddress').value.trim(),city:$('mCity').value.trim(),email:$('mEmail').value.trim(),phone:$('mPhone').value.trim(),contact_name:$('mContact').value.trim(),status:normalizeStatus(row?.status||'active')};if(!payload.name)return alert('Organization name is required.');try{row?await request('businesses','PATCH',row.id,payload):await request('businesses','POST',null,payload);window.showToast?.('Master record saved.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not save master record: ${e.message}`);}};
+      $('archiveMaster')?.addEventListener('click',async()=>{const status=normalizeStatus(row.status)==='archived'?'active':'archived';try{await request('businesses','PATCH',row.id,{status});window.showToast?.(`Master record ${status==='archived'?'archived':'restored'}.`);$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not update master record: ${e.message}`);}});
     }
 
-    function renderMasterRegistry() {
-      const rows = masterRows();
-      masterSection.innerHTML = `<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Shared Identity</span><div class="field"><label>Search</label><input id="masterSearch" placeholder="Name, email, phone, address..."></div><div class="filter-stack"><button class="btn filter-btn ${masterFilter==='all'?'primary':''}" data-master-filter="all"><span>All</span><span>${rows.length}</span></button><button class="btn filter-btn ${masterFilter==='active'?'primary':''}" data-master-filter="active"><span>Active</span><span>${rows.filter(r=>normalizeStatus(r.status)!=='archived').length}</span></button><button class="btn filter-btn ${masterFilter==='archived'?'primary':''}" data-master-filter="archived"><span>Archived</span><span>${rows.filter(r=>normalizeStatus(r.status)==='archived').length}</span></button></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Registry</span><h2 style="margin:.25rem 0">Organizations</h2><p style="color:var(--muted);margin:0">Shared identity only. Department work is kept out of this registry.</p></div><button class="btn primary" id="addMasterRecord">Add Organization</button></div><div class="registry-list" id="masterRegistryList"></div></div></div>`;
-      const search = $('masterSearch');
-      const list = $('masterRegistryList');
-      const draw = () => {
-        const q = search.value.trim().toLowerCase();
-        const filtered = rows.filter(r => (masterFilter === 'all' || (masterFilter === 'archived' ? normalizeStatus(r.status) === 'archived' : normalizeStatus(r.status) !== 'archived')) && (!q || [r.name,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q)));
-        list.innerHTML = filtered.length ? filtered.map(r => `<button class="registry-row" data-master-id="${esc(r.id)}"><span><strong>${esc(r.name || 'Unnamed organization')}</strong><small>${esc([r.address,r.city,r.email,r.phone].filter(Boolean).join(' · '))}</small></span><span class="status ${normalizeStatus(r.status)}">${esc(normalizeStatus(r.status))}</span></button>`).join('') : '<div class="empty">No master records match this view.</div>';
-        list.querySelectorAll('[data-master-id]').forEach(b => b.onclick = () => openMasterWorkspace(b.dataset.masterId));
-      };
-      search.addEventListener('input', draw);
-      masterSection.querySelectorAll('[data-master-filter]').forEach(b => b.onclick = () => { masterFilter = b.dataset.masterFilter; renderMasterRegistry(); });
-      $('addMasterRecord').onclick = () => openMasterWorkspace(null);
-      draw();
+    function openBusinessWorkspace(source,id){
+      const row=departmentRows().find(r=>r.source===source&&String(r.id)===String(id));if(!row)return;const master=matchMaster(row),status=normalizeStatus(row.status);$('modalEyebrow').textContent='Business Network Record';$('modalTitle').textContent=row.name;$('modalSub').textContent=`${status} · ${source}`;$('modalBody').innerHTML=`<div class="workspace-tabs"><button class="btn active" data-tab="overview">Overview</button><button class="btn" data-tab="application">Application</button><button class="btn" data-tab="internal">Internal</button><button class="btn" data-tab="public">Public Listing</button><button class="btn" data-tab="notes">Notes</button></div><section class="workspace-pane active" data-pane="overview"><div class="record-meta"><div><small>Department Record</small><strong>${esc(row.id)}</strong></div><div><small>Status</small><strong>${esc(status)}</strong></div><div><small>Master Identity</small><strong>${esc(master?.name||'Not linked')}</strong></div></div><div class="work-card" style="margin-top:12px"><span class="eyebrow">Record Summary</span><h3>${esc(row.name)}</h3><p>${esc([row.category,row.city,row.email,row.phone].filter(Boolean).join(' · '))}</p><div class="ops-actions"><button class="btn primary" id="saveDepartment">Save Record</button><select id="bnStatus" class="btn" style="text-transform:none"><option>new</option><option>in review</option><option>waiting</option><option>approved</option><option>published</option><option>active</option><option>declined</option><option>archived</option></select></div></div></section><section class="workspace-pane" data-pane="application"><div class="work-grid"><div class="work-card"><span class="eyebrow">Submitted Information</span>${field('bName','Business Name',row.name)}${field('bContact','Contact Person',row.contact)}${field('bEmail','Email',row.email,'email')}${field('bPhone','Phone',row.phone)}${field('bWebsite','Website',row.website)}</div><div class="work-card">${field('bAddress','Address',row.address)}${field('bCity','City',row.city)}${field('bCategory','Category',row.category)}${field('bApplication','Application Details',row.application||row.notes,'textarea')}</div></div></section><section class="workspace-pane" data-pane="internal"><div class="work-grid"><div class="work-card"><span class="eyebrow">Department-Owned Data</span>${field('bBadges','Badges',row.badges,'textarea')}${field('bAssigned','Assigned Staff',row.assigned_to)}</div><div class="work-card"><div class="notice">This information belongs to Business Network. It does not alter the master identity record.</div>${field('bInternal','Internal Notes',row.internal_notes||row.notes,'textarea')}</div></div></section><section class="workspace-pane" data-pane="public"><div class="work-grid"><div class="work-card"><span class="eyebrow">Show Stage Production</span>${field('bDescription','Public Description',row.description,'textarea')}${field('bPhotos','Logo / Photo URLs',row.photos,'textarea')}</div><div class="work-card"><h3>Publication</h3><p>Publishing controls the Land of Hearts listing for this Business Network record.</p><div class="ops-actions"><button class="btn primary" id="publishBusiness">Save & Publish</button><button class="btn" id="hideBusiness">Hide Listing</button></div></div></div></section><section class="workspace-pane" data-pane="notes"><div class="work-card"><span class="eyebrow">Department Notes</span>${field('bNotes','Notes / Communications',row.notes,'textarea')}<button class="btn primary" id="saveNotes">Save Notes</button></div></section>`;$('bnStatus').value=status;$('modalBackdrop').classList.add('open');document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.onclick=()=>activateModalTab(b.dataset.tab));
+      const payload=()=>({name:$('bName').value.trim(),contact_name:$('bContact').value.trim(),email:$('bEmail').value.trim(),phone:$('bPhone').value.trim(),website:$('bWebsite').value.trim(),address:$('bAddress').value.trim(),city:$('bCity').value.trim(),category:$('bCategory').value.trim(),description:$('bDescription').value.trim(),notes:$('bNotes').value.trim(),status:$('bnStatus').value});const save=async(extra={},message='Business Network record saved.')=>{try{const table=tableFor(row.source);if(!table)throw new Error('Unsupported record source');await request(table,'PATCH',row.id,{...payload(),...extra});window.showToast?.(message);$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderBusinessRegistry,650);}catch(e){alert(`Could not save record: ${e.message}`);}};$('saveDepartment').onclick=()=>save();$('saveNotes').onclick=()=>save({},'Notes saved.');$('publishBusiness').onclick=()=>save({status:'published'},'Business listing published.');$('hideBusiness').onclick=()=>save({status:'hidden'},'Business listing hidden.');
     }
 
-    function renderBusinessRegistry() {
-      const rows = departmentRows();
-      businessSection.innerHTML = `<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Business Network</span><div class="field"><label>Search</label><input id="bnSearch" placeholder="Business name, category, city..."></div><div class="filter-stack" id="bnFilters"></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Department Registry</span><h2 style="margin:.25rem 0">Business Network Records</h2><p style="color:var(--muted);margin:0">Business Network owns these records and its public production.</p></div><button class="btn primary" id="addBusinessRecord">Add Business Record</button></div><div class="registry-list" id="bnList"></div></div></div>`;
-      const statuses = ['all','new','in review','waiting','approved','published','active','declined','archived'];
-      const filters = $('bnFilters');
-      filters.innerHTML = statuses.map(s => `<button class="btn filter-btn ${businessFilter===s?'primary':''}" data-bn-filter="${s}"><span>${s==='all'?'All Records':s.replace(/\b\w/g,c=>c.toUpperCase())}</span><span>${rows.filter(r=>s==='all'||normalizeStatus(r.status)===s).length}</span></button>`).join('');
-      filters.querySelectorAll('[data-bn-filter]').forEach(b => b.onclick = () => { businessFilter = b.dataset.bnFilter; renderBusinessRegistry(); });
-      const search = $('bnSearch');
-      const list = $('bnList');
-      const draw = () => {
-        const q = search.value.trim().toLowerCase();
-        const filtered = rows.filter(r => (businessFilter === 'all' || normalizeStatus(r.status) === businessFilter) && (!q || [r.name,r.category,r.city,r.email,r.phone].join(' ').toLowerCase().includes(q)));
-        list.innerHTML = filtered.length ? filtered.map(r => { const master = matchMaster(r); return `<button class="registry-row" data-source="${esc(r.source)}" data-id="${esc(r.id)}"><span><strong>${esc(r.name || 'Unnamed business')}</strong><small>${esc([r.category,r.city,r.email||r.phone].filter(Boolean).join(' · '))}</small><small>Master: ${esc(master ? master.name : 'Not linked')}</small></span><span class="status ${normalizeStatus(r.status).replace(/\s+/g,'-')}">${esc(normalizeStatus(r.status))}</span></button>`; }).join('') : '<div class="empty">No department records match this view.</div>';
-        list.querySelectorAll('[data-source]').forEach(b => b.onclick = () => openBusinessWorkspace(b.dataset.source, b.dataset.id));
-      };
-      search.addEventListener('input', draw);
-      $('addBusinessRecord').onclick = () => $('manualBtn')?.click();
-      draw();
-    }
-
-    function activateModalTab(name) {
-      document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-      document.querySelectorAll('.workspace-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === name));
-    }
-
-    function openMasterWorkspace(id) {
-      const row = id == null ? null : masterRows().find(r => String(r.id) === String(id));
-      $('modalEyebrow').textContent = 'Master Record';
-      $('modalTitle').textContent = row ? row.name : 'New Organization';
-      $('modalSub').textContent = row ? `Organization ID ${row.id}` : 'Create shared identity record';
-      $('modalBody').innerHTML = `<div class="workspace-tabs"><button class="btn active" data-tab="identity">Identity</button><button class="btn" data-tab="contacts">Contact</button><button class="btn" data-tab="administration">Administration</button></div><section class="workspace-pane active" data-pane="identity"><div class="work-grid"><div class="work-card"><span class="eyebrow">Identity</span><h3>Organization</h3>${field('mName','Organization Name',row?.name)}${field('mWebsite','Website',row?.website)}${field('mAddress','Physical Address',row?.address)}${field('mCity','City',row?.city)}</div><div class="work-card"><span class="eyebrow">Mailing</span><h3>Shared address information</h3>${field('mMailing','Mailing Address',row?.mailing_address || row?.address)}${field('mState','State',row?.state || 'FL')}${field('mZip','ZIP Code',row?.zip || row?.postal_code)}</div></div></section><section class="workspace-pane" data-pane="contacts"><div class="work-grid"><div class="work-card">${field('mContact','Primary Contact',row?.contact)}${field('mEmail','Primary Email',row?.email,'email')}${field('mPhone','Primary Phone',row?.phone)}</div><div class="work-card"><div class="notice">This tab contains shared contact information only. Business Network notes, application details, badges, publishing, and workflow stay in the department record.</div></div></div></section><section class="workspace-pane" data-pane="administration"><div class="work-card"><div class="record-meta"><div><small>Master ID</small><strong>${esc(row?.id || 'Created when saved')}</strong></div><div><small>Status</small><strong>${esc(normalizeStatus(row?.status || 'active'))}</strong></div><div><small>Source</small><strong>Master Registry</strong></div></div><div class="ops-actions" style="margin-top:14px"><button class="btn primary" id="saveMaster">${row?'Save Master Record':'Create Master Record'}</button>${row?`<button class="btn danger" id="archiveMaster">${normalizeStatus(row.status)==='archived'?'Restore':'Archive'}</button>`:''}</div></div></section>`;
-      $('modalBackdrop').classList.add('open');
-      document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b => b.onclick = () => activateModalTab(b.dataset.tab));
-      $('saveMaster').onclick = async () => {
-        const payload = { name:$('mName').value.trim(), website:$('mWebsite').value.trim(), address:$('mAddress').value.trim(), city:$('mCity').value.trim(), email:$('mEmail').value.trim(), phone:$('mPhone').value.trim(), contact_name:$('mContact').value.trim(), status:normalizeStatus(row?.status || 'active') };
-        if (!payload.name) return alert('Organization name is required.');
-        try { row ? await request('businesses','PATCH',row.id,payload) : await request('businesses','POST',null,payload); window.showToast?.('Master record saved.'); $('modalBackdrop').classList.remove('open'); $('reloadBtn')?.click(); setTimeout(renderMasterRegistry,500); } catch (e) { alert(`Could not save master record: ${e.message}`); }
-      };
-      $('archiveMaster')?.addEventListener('click', async () => {
-        const status = normalizeStatus(row.status) === 'archived' ? 'active' : 'archived';
-        try { await request('businesses','PATCH',row.id,{status}); window.showToast?.(`Master record ${status === 'archived' ? 'archived' : 'restored'}.`); $('modalBackdrop').classList.remove('open'); $('reloadBtn')?.click(); setTimeout(renderMasterRegistry,500); } catch (e) { alert(`Could not update master record: ${e.message}`); }
-      });
-    }
-
-    function openBusinessWorkspace(source, id) {
-      const row = departmentRows().find(r => r.source === source && String(r.id) === String(id));
-      if (!row) return;
-      const master = matchMaster(row);
-      const status = normalizeStatus(row.status);
-      $('modalEyebrow').textContent = 'Business Network Record';
-      $('modalTitle').textContent = row.name;
-      $('modalSub').textContent = `${status} · ${source}`;
-      $('modalBody').innerHTML = `<div class="workspace-tabs"><button class="btn active" data-tab="overview">Overview</button><button class="btn" data-tab="application">Application</button><button class="btn" data-tab="internal">Internal</button><button class="btn" data-tab="public">Public Listing</button><button class="btn" data-tab="notes">Notes</button></div><section class="workspace-pane active" data-pane="overview"><div class="record-meta"><div><small>Department Record</small><strong>${esc(row.id)}</strong></div><div><small>Status</small><strong>${esc(status)}</strong></div><div><small>Master Identity</small><strong>${esc(master?.name || 'Not linked')}</strong></div></div><div class="work-card" style="margin-top:12px"><span class="eyebrow">Record Summary</span><h3>${esc(row.name)}</h3><p>${esc([row.category,row.city,row.email,row.phone].filter(Boolean).join(' · '))}</p><div class="ops-actions"><button class="btn primary" id="saveDepartment">Save Record</button><select id="bnStatus" class="btn" style="text-transform:none"><option>new</option><option>in review</option><option>waiting</option><option>approved</option><option>published</option><option>active</option><option>declined</option><option>archived</option></select></div></div></section><section class="workspace-pane" data-pane="application"><div class="work-grid"><div class="work-card"><span class="eyebrow">Submitted Information</span>${field('bName','Business Name',row.name)}${field('bContact','Contact Person',row.contact)}${field('bEmail','Email',row.email,'email')}${field('bPhone','Phone',row.phone)}${field('bWebsite','Website',row.website)}</div><div class="work-card">${field('bAddress','Address',row.address)}${field('bCity','City',row.city)}${field('bCategory','Category',row.category)}${field('bApplication','Application Details',row.application || row.notes,'textarea')}</div></div></section><section class="workspace-pane" data-pane="internal"><div class="work-grid"><div class="work-card"><span class="eyebrow">Department-Owned Data</span>${field('bBadges','Badges',row.badges,'textarea')}${field('bAssigned','Assigned Staff',row.assigned_to)}</div><div class="work-card"><div class="notice">This information belongs to Business Network. It does not alter the master identity record.</div>${field('bInternal','Internal Notes',row.internal_notes || row.notes,'textarea')}</div></div></section><section class="workspace-pane" data-pane="public"><div class="work-grid"><div class="work-card"><span class="eyebrow">Show Stage Production</span>${field('bDescription','Public Description',row.description,'textarea')}${field('bPhotos','Logo / Photo URLs',row.photos,'textarea')}</div><div class="work-card"><h3>Publication</h3><p>Publishing controls the Land of Hearts listing for this Business Network record.</p><div class="ops-actions"><button class="btn primary" id="publishBusiness">Save & Publish</button><button class="btn" id="hideBusiness">Hide Listing</button></div></div></div></section><section class="workspace-pane" data-pane="notes"><div class="work-card"><span class="eyebrow">Department Notes</span>${field('bNotes','Notes / Communications',row.notes,'textarea')}<button class="btn primary" id="saveNotes">Save Notes</button></div></section>`;
-      $('bnStatus').value = status;
-      $('modalBackdrop').classList.add('open');
-      document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b => b.onclick = () => activateModalTab(b.dataset.tab));
-      const payload = () => ({ name:$('bName').value.trim(), contact_name:$('bContact').value.trim(), email:$('bEmail').value.trim(), phone:$('bPhone').value.trim(), website:$('bWebsite').value.trim(), address:$('bAddress').value.trim(), city:$('bCity').value.trim(), category:$('bCategory').value.trim(), description:$('bDescription').value.trim(), notes:$('bNotes').value.trim(), status:$('bnStatus').value });
-      const save = async (extra = {}, message = 'Business Network record saved.') => {
-        try { const table = tableFor(row.source); if (!table) throw new Error('Unsupported record source'); await request(table,'PATCH',row.id,{...payload(),...extra}); window.showToast?.(message); $('modalBackdrop').classList.remove('open'); $('reloadBtn')?.click(); setTimeout(renderBusinessRegistry,500); } catch (e) { alert(`Could not save record: ${e.message}`); }
-      };
-      $('saveDepartment').onclick = () => save();
-      $('saveNotes').onclick = () => save({},'Notes saved.');
-      $('publishBusiness').onclick = () => save({status:'published'},'Business listing published.');
-      $('hideBusiness').onclick = () => save({status:'hidden'},'Business listing hidden.');
-    }
-
-    const originalNavButtons = () => document.querySelectorAll('.nav [data-view]');
-    originalNavButtons().forEach(button => {
-      button.addEventListener('click', () => {
-        if (button.dataset.view === 'masters') setTimeout(renderMasterRegistry,0);
-        if (button.dataset.view === 'business') setTimeout(renderBusinessRegistry,0);
-      });
-    });
-
-    renderMasterRegistry();
-    renderBusinessRegistry();
+    masterButton?.addEventListener('click',()=>{showSection('masters','Master Records','Shared identity records only. Department work remains in department-owned registries.');renderMasterRegistry();});
+    businessButton?.addEventListener('click',()=>setTimeout(renderBusinessRegistry,0));
+    renderMasterRegistry();renderBusinessRegistry();
   });
 })();
