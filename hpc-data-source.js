@@ -11,7 +11,7 @@ if (window.location.pathname.includes('business-network')) {
 if (window.location.pathname.includes('staff')) {
   window.addEventListener('DOMContentLoaded', () => {
     const workflowScript = document.createElement('script');
-    workflowScript.src = 'staff-business-workflow.js?v=workflow-20260709';
+    workflowScript.src = 'staff-business-workflow.js?v=workflow-visible-20260709b';
     document.body.appendChild(workflowScript);
   }, { once: true });
 }
