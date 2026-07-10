@@ -11,10 +11,10 @@ if (window.location.pathname.includes('business-network')) {
 if (window.location.pathname.includes('staff')) {
   window.addEventListener('DOMContentLoaded', () => {
     const operationalScript = document.createElement('script');
-    operationalScript.src = 'staff-business-operational.js?v=operational-20260709';
+    operationalScript.src = 'staff-business-operational.js?v=master-registry-production-20260710';
     document.body.appendChild(operationalScript);
   }, { once: true });
 }
 
-// Staff portal foundation is locked.
-// Active build target: Business Department management workspace.
+// Production foundation: shared master identity records plus department-owned work records.
+// Active build target: fully operational Business Network department and Land of Hearts publishing.
