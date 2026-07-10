@@ -12,6 +12,11 @@ if (window.location.pathname.includes('staff')) {
   window.addEventListener('DOMContentLoaded', () => {
     const workflowScript = document.createElement('script');
     workflowScript.src = 'staff-business-workflow.js?v=business-workflow-rebuild-20260709';
+    workflowScript.onload = () => {
+      const functionalScript = document.createElement('script');
+      functionalScript.src = 'staff-business-functional-fix.js?v=functional-20260709';
+      document.body.appendChild(functionalScript);
+    };
     document.body.appendChild(workflowScript);
   }, { once: true });
 }
