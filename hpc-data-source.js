@@ -8,5 +8,13 @@ if (window.location.pathname.includes('business-network')) {
   document.head.appendChild(cardsScript);
 }
 
+if (window.location.pathname.includes('staff')) {
+  window.addEventListener('DOMContentLoaded', () => {
+    const workflowScript = document.createElement('script');
+    workflowScript.src = 'staff-business-workflow.js?v=workflow-20260709';
+    document.body.appendChild(workflowScript);
+  }, { once: true });
+}
+
 // Staff portal foundation is locked.
 // Active build target: Business Department management workspace.
