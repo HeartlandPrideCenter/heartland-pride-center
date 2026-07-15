@@ -1,0 +1,11 @@
+{
+  "overall": "fail",
+  "ran_at_utc": "2026-07-15T13:29:19Z",
+  "run_number": "2",
+  "run_url": "https://github.com/HeartlandPrideCenter/heartland-pride-center/actions/runs/29419373451",
+  "forms": {
+    "contact": {"status": "fail", "http_code": 401, "message": "{\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"new row violates row-level security policy for table \\"applications\\"\"}"},
+    "volunteer": {"status": "fail", "http_code": 401, "message": "{\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"new row violates row-level security policy for table \\"applications\\"\"}"},
+    "business": {"status": "fail", "http_code": 401, "message": "{\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"new row violates row-level security policy for table \\"applications\\"\"}"}
+  }
+}
