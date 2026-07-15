@@ -1,25 +1,38 @@
 name: Form Intake Health Check
 
 on:
+  schedule:
+    # 12:15 UTC = 8:15 AM EDT / 7:15 AM EST
+    - cron: '15 12 * * *'
+  workflow_dispatch:
   push:
     paths:
       - '.github/workflows/form-intake-health-check.yml'
-  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: production-intake-health
+  cancel-in-progress: false
 
 jobs:
   verify-intake:
     runs-on: ubuntu-latest
     steps:
-      - name: Submit clearly labeled production test records
+      - name: Check out website
+        uses: actions/checkout@v4
+
+      - name: Test production intake endpoints
+        id: intake
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           API='https://xrunawtqotumbsztboxo.supabase.co/rest/v1/applications'
           KEY='sb_publishable_UyoqGKapp6Da2CNE4qqlZA_BodqSra8'
           STAMP="$(date -u +%Y%m%d-%H%M%S)"
+          RAN_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          mkdir -p health
 
           submit() {
             TYPE="$1"
@@ -27,7 +40,7 @@ jobs:
             NAME="$3"
             CATEGORY="$4"
             PAYLOAD=$(cat <<JSON
-          {"type":"${TYPE}","status":"${STATUS}","organization_name":"${NAME} ${STAMP}","contact_name":"HPC Automated Test","email":"info@heartlandpridecenter.org","phone":"8635550100","category":"${CATEGORY}","city":"Lake Wales","county":"Polk","description":"Automated production intake health check ${STAMP}","notes":"TEST ONLY - archive after verification"}
+          {"type":"${TYPE}","status":"${STATUS}","organization_name":"${NAME} ${STAMP}","contact_name":"HPC Automated Test","email":"info@heartlandpridecenter.org","phone":"8635550100","category":"${CATEGORY}","city":"Lake Wales","county":"Polk","description":"Automated production intake health check ${STAMP}","notes":"AUTOMATED TEST ONLY - archive after verification"}
           JSON
             )
             CODE=$(curl --silent --show-error --output "${TYPE}.json" --write-out '%{http_code}' \
@@ -37,15 +50,61 @@ jobs:
               --header 'Content-Type: application/json' \
               --header 'Prefer: return=representation' \
               --data "$PAYLOAD")
-            echo "$TYPE response: $CODE"
-            cat "${TYPE}.json"
-            echo
-            test "$CODE" = "201"
+            BODY=$(cat "${TYPE}.json" 2>/dev/null || true)
+            if [ "$CODE" = "201" ]; then
+              RESULT='pass'
+              MESSAGE='Submission accepted by production database.'
+            else
+              RESULT='fail'
+              MESSAGE=$(printf '%s' "$BODY" | tr '\n' ' ' | sed 's/"/\\"/g' | cut -c1-500)
+            fi
+            printf '%s|%s|%s\n' "$RESULT" "$CODE" "$MESSAGE"
           }
 
-          submit contact new 'HPC CONTACT TEST' 'General Contact'
-          submit volunteer new 'HPC VOLUNTEER TEST' 'Volunteer Interest'
-          submit business pending 'HPC BUSINESS TEST' 'Nonprofit'
+          CONTACT=$(submit contact new 'HPC CONTACT DAILY TEST' 'General Contact')
+          VOLUNTEER=$(submit volunteer new 'HPC VOLUNTEER DAILY TEST' 'Volunteer Interest')
+          BUSINESS=$(submit business pending 'HPC BUSINESS DAILY TEST' 'Nonprofit')
 
-      - name: Record result
-        run: echo 'Contact, volunteer, and business intake endpoints accepted production test submissions.'
+          IFS='|' read -r CONTACT_RESULT CONTACT_CODE CONTACT_MESSAGE <<< "$CONTACT"
+          IFS='|' read -r VOLUNTEER_RESULT VOLUNTEER_CODE VOLUNTEER_MESSAGE <<< "$VOLUNTEER"
+          IFS='|' read -r BUSINESS_RESULT BUSINESS_CODE BUSINESS_MESSAGE <<< "$BUSINESS"
+
+          OVERALL='pass'
+          if [ "$CONTACT_RESULT" != 'pass' ] || [ "$VOLUNTEER_RESULT" != 'pass' ] || [ "$BUSINESS_RESULT" != 'pass' ]; then OVERALL='fail'; fi
+
+          cat > health/intake-status.json <<JSON
+          {
+            "overall": "${OVERALL}",
+            "ran_at_utc": "${RAN_AT}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "run_url": "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+            "forms": {
+              "contact": {"status": "${CONTACT_RESULT}", "http_code": ${CONTACT_CODE}, "message": "${CONTACT_MESSAGE}"},
+              "volunteer": {"status": "${VOLUNTEER_RESULT}", "http_code": ${VOLUNTEER_CODE}, "message": "${VOLUNTEER_MESSAGE}"},
+              "business": {"status": "${BUSINESS_RESULT}", "http_code": ${BUSINESS_CODE}, "message": "${BUSINESS_MESSAGE}"}
+            }
+          }
+          JSON
+
+          echo "overall=${OVERALL}" >> "$GITHUB_OUTPUT"
+          cat health/intake-status.json
+          exit 0
+
+      - name: Publish latest status for Atlas HQ
+        shell: bash
+        run: |
+          git config user.name 'HPC Intake Sentinel'
+          git config user.email 'actions@users.noreply.github.com'
+          git add health/intake-status.json
+          if git diff --cached --quiet; then
+            echo 'No status change to publish.'
+          else
+            git commit -m 'Update daily public intake health status'
+            git push
+          fi
+
+      - name: Fail workflow when intake is unhealthy
+        if: steps.intake.outputs.overall != 'pass'
+        run: |
+          echo 'One or more production intake forms failed.'
+          exit 1
