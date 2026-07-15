@@ -1,0 +1,51 @@
+name: Form Intake Health Check
+
+on:
+  push:
+    paths:
+      - '.github/workflows/form-intake-health-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit clearly labeled production test records
+        shell: bash
+        run: |
+          set -euo pipefail
+          API='https://xrunawtqotumbsztboxo.supabase.co/rest/v1/applications'
+          KEY='sb_publishable_UyoqGKapp6Da2CNE4qqlZA_BodqSra8'
+          STAMP="$(date -u +%Y%m%d-%H%M%S)"
+
+          submit() {
+            TYPE="$1"
+            STATUS="$2"
+            NAME="$3"
+            CATEGORY="$4"
+            PAYLOAD=$(cat <<JSON
+          {"type":"${TYPE}","status":"${STATUS}","organization_name":"${NAME} ${STAMP}","contact_name":"HPC Automated Test","email":"info@heartlandpridecenter.org","phone":"8635550100","category":"${CATEGORY}","city":"Lake Wales","county":"Polk","description":"Automated production intake health check ${STAMP}","notes":"TEST ONLY - archive after verification"}
+          JSON
+            )
+            CODE=$(curl --silent --show-error --output "${TYPE}.json" --write-out '%{http_code}' \
+              --request POST "$API" \
+              --header "apikey: $KEY" \
+              --header "Authorization: Bearer $KEY" \
+              --header 'Content-Type: application/json' \
+              --header 'Prefer: return=representation' \
+              --data "$PAYLOAD")
+            echo "$TYPE response: $CODE"
+            cat "${TYPE}.json"
+            echo
+            test "$CODE" = "201"
+          }
+
+          submit contact new 'HPC CONTACT TEST' 'General Contact'
+          submit volunteer new 'HPC VOLUNTEER TEST' 'Volunteer Interest'
+          submit business pending 'HPC BUSINESS TEST' 'Nonprofit'
+
+      - name: Record result
+        run: echo 'Contact, volunteer, and business intake endpoints accepted production test submissions.'
