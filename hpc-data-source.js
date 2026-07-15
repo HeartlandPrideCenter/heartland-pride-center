@@ -71,6 +71,10 @@ if (window.location.pathname.includes('staff')) {
     const operationalScript = document.createElement('script');
     operationalScript.src = 'staff-business-operational.js?v=master-workspace-complete-20260710';
     document.body.appendChild(operationalScript);
+
+    const intakeHealthScript = document.createElement('script');
+    intakeHealthScript.src = 'staff-intake-health.js?v=daily-sentinel-20260715';
+    document.body.appendChild(intakeHealthScript);
   }, { once: true });
 }
 
