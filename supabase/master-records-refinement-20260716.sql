@@ -23,30 +23,6 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
-alter table public.businesses enable row level security;
-
-drop policy if exists "Authenticated staff can update businesses" on public.businesses;
-create policy "Authenticated staff can update businesses"
-on public.businesses
-for update
-to authenticated
-using (true)
-with check (true);
-
-drop policy if exists "Authenticated staff can read businesses" on public.businesses;
-create policy "Authenticated staff can read businesses"
-on public.businesses
-for select
-to authenticated
-using (true);
-
-drop policy if exists "Authenticated staff can insert businesses" on public.businesses;
-create policy "Authenticated staff can insert businesses"
-on public.businesses
-for insert
-to authenticated
-with check (true);
-
 drop policy if exists "Staff can upload master note attachments" on storage.objects;
 create policy "Staff can upload master note attachments"
 on storage.objects
