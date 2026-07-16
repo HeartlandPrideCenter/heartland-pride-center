@@ -1,0 +1,32 @@
+extContent=intro; }
+    function field(id,label,value='',type='text',readonly=false){return `<div class="work-field"><label for="${id}">${esc(label)}</label><input id="${id}" type="${type}" value="${esc(value)}"${readonly?' readonly':''}></div>`;}
+    function selectField(id,label,options,value,disabled=false){return `<div class="work-field"><label for="${id}">${esc(label)}</label><select id="${id}"${disabled?' disabled':''}>${options.map(o=>`<option value="${esc(o)}"${o===value?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;}
+
+    function renderMasterRegistry(){
+      const rows=masterRows();
+      masterSection.innerHTML=`<div class="registry-shell"><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Database</span><h2 style="margin:.2rem 0">Master Records</h2></div><button class="btn primary" id="addMasterRecord">Add Master Record</button></div><div class="registry-table"><div class="registry-head"><span>Status / MR #</span><span>Name</span><span>Entity Type</span><span>Physical Location</span><span>Last Updated</span></div><div id="masterRegistryList"></div></div><div class="registry-footer"><div id="recordRange"></div><div class="pager"><button class="btn" id="pageHome">Home</button><button class="btn" id="pagePrev">Previous</button><button class="btn" id="pageNext">Next</button><button class="btn" id="pageEnd">End</button></div><label>Rows <select id="pageSize"><option>25</option><option>50</option><option>100</option></select></label></div></div></div>`;
+      $('pageSize').value=String(pageSize);
+      const draw=()=>{
+        const q=String(searchBox?.value||'').trim().toLowerCase(), type=String(entityFilter?.value||'all').toLowerCase();
+        const filtered=rows.filter(r=>{const meta=parseMeta(r);return(type==='all'||meta.type.toLowerCase()===type)&&(!q||[r.name,meta.mrNumber,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q));});
+        const pages=Math.max(1,Math.ceil(filtered.length/pageSize)); masterPage=Math.min(masterPage,pages); const start=(masterPage-1)*pageSize, pageRows=filtered.slice(start,start+pageSize);
+        $('masterRegistryList').innerHTML=pageRows.length?pageRows.map(r=>{const meta=parseMeta(r),status=statusOf(r);return `<button class="registry-row" data-master-id="${esc(r.id)}"><span>${statusDot(status)}<small>${esc(meta.mrNumber||'MR pending')}</small></span><span><strong>${esc(r.name||'Unnamed record')}</strong><small>${esc(r.email||r.phone||'')}</small></span><span>${esc(meta.type)}</span><span>${esc([r.address,r.city].filter(Boolean).join(' · ')||'Not provided')}</span><span>${esc(new Date(r.updated_at||r.created_at||Date.now()).toLocaleDateString())}</span></button>`;}).join(''):'<div class="empty" style="padding:18px">No master records match this search.</div>';
+        $('recordRange').textContent=filtered.length?`Showing ${start+1}-${Math.min(start+pageSize,filtered.length)} of ${filtered.length} records`:'0 records';
+        const clear=$('clearFilters'), has=Boolean(q||type!=='all'); clear?.classList.toggle('visible',has);
+        document.querySelectorAll('[data-master-id]').forEach(b=>{
+          b.onclick=()=>openMasterWorkspace(b.dataset.masterId);
+          let timer,preview; b.onmouseenter=e=>{timer=setTimeout(()=>{const r=rows.find(x=>String(x.id)===String(b.dataset.masterId)),m=parseMeta(r);preview=document.createElement('div');preview.className='quick-preview';preview.innerHTML=`<strong>${esc(r.name||'Unnamed')}</strong><small>${esc(m.mrNumber||'MR pending')} · ${esc(m.type)}</small><small>${esc([r.address,r.city].filter(Boolean).join(', ')||'No location')}</small><small>${esc(r.email||r.phone||'No primary contact')}</small>`;document.body.appendChild(preview);const rect=b.getBoundingClientRect();preview.style.left=`${Math.min(rect.right+10,innerWidth-274)}px`;preview.style.top=`${Math.min(rect.top,innerHeight-preview.offsetHeight-10)}px`;},400);}; b.onmouseleave=()=>{clearTimeout(timer);preview?.remove();};
+        });
+        $('pageHome').disabled=masterPage===1; $('pagePrev').disabled=masterPage===1; $('pageNext').disabled=masterPage===pages; $('pageEnd').disabled=masterPage===pages;
+      };
+      searchBox?.addEventListener('input',()=>{masterPage=1;draw();}); entityFilter?.addEventListener('change',()=>{masterPage=1;draw();});
+      $('clearFilters')?.addEventListener('click',()=>{if(masterMode){if(searchBox)searchBox.value='';if(entityFilter)entityFilter.value='all';masterPage=1;setTimeout(draw,0);}});
+      $('pageHome').onclick=()=>{masterPage=1;draw();}; $('pagePrev').onclick=()=>{masterPage=Math.max(1,masterPage-1);draw();}; $('pageNext').onclick=()=>{masterPage++;draw();}; $('pageEnd').onclick=()=>{const q=String(searchBox?.value||'').trim().toLowerCase(),type=String(entityFilter?.value||'all').toLowerCase();const count=rows.filter(r=>{const m=parseMeta(r);return(type==='all'||m.type.toLowerCase()===type)&&(!q||[r.name,m.mrNumber,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q));}).length;masterPage=Math.max(1,Math.ceil(count/pageSize));draw();};
+      $('pageSize').onchange=e=>{pageSize=Number(e.target.value);masterPage=1;draw();}; $('addMasterRecord').onclick=()=>openMasterWorkspace(null); draw();
+    }
+
+    function renderBusinessRegistry(){
+      const rows=departmentRows();
+      businessSection.innerHTML=`<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Business Network</span><div class="field"><label>Search</label><input id="bnSearch" placeholder="Business name, category, city..."></div><div class="filter-stack" id="bnFilters"></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Department Registry</span><h2 style="margin:.25rem 0">Business Network Records</h2><p style="color:var(--muted);margin:0">Business Network owns these records and its public production.</p></div><button class="btn primary" id="addBusinessRecord">Add Business Record</button></div><div class="registry-list" id="bnList"></div></div></div>`;
+      const statuses=['all','new','in review','waiting','approved','published','active','declined','archived'];
+      $('bnFilters').innerHTML=statuses.map(s=>`<button class="btn filter-btn ${businessFilter===s?'primary':''}" data-bn-filter="${s}"><span>${s==='all'?'All Records':s.replace(/\b\w/g,c=>c.toUpperCase())}</span><span>${rows.filter(r=>s==='all'||String(r.status||'new').toLowerCase()===s).leng
