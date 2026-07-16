@@ -1,0 +1,33 @@
+ 0 0 3px rgba(208,76,85,.13)}.mr-status.active i{background:#47d786;box-shadow:0 0 0 3px rgba(71,215,134,.13)}.mr-status.archived i{background:#9aa6b2;box-shadow:0 0 0 3px rgba(154,166,178,.13)}.registry-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:12px;flex-wrap:wrap}.pager{display:flex;gap:6px}.pager .btn{padding:8px 11px}.quick-preview{position:fixed;z-index:1200;width:260px;max-width:calc(100vw - 28px);border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#0a2035;color:var(--cream);box-shadow:0 16px 40px rgba(0,0,0,.35);pointer-events:none;font-size:.86rem}.quick-preview small{display:block;color:var(--muted);margin-top:4px}.workspace-tabs{position:sticky;top:0;z-index:8;display:flex;gap:6px;flex-wrap:wrap;margin:-10px -14px 12px;padding:9px 14px;background:#071827;border-bottom:1px solid var(--line)}.workspace-tabs .btn{padding:8px 13px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.03)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field input[readonly],.work-field textarea[readonly]{opacity:.86;cursor:default}.record-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.025)}.record-meta small{display:block;color:var(--muted);margin-bottom:4px}.contact-card,.note-card,.usage-row{border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0;background:rgba(255,255,255,.025)}.contact-card.primary{border-color:rgba(240,206,115,.55)}.contact-head,.note-head,.usage-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.contact-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.modal-head{padding:13px 18px!important;min-height:auto!important}.modal-head h2{font-size:1.35rem;margin:.2rem 0}.modal-head p{margin:.2rem 0}.modal-head .btn,#closeModal{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;border-radius:50%!important;font-size:0!important}.modal-head .btn::after,#closeModal::after{content:'×';font-size:24px;line-height:1}.modal-body{padding:10px 18px 20px!important}.ops-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}.admin-actions{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}.notes-compose textarea{min-height:90px}.clear-compact{padding:8px 12px!important;display:none}.clear-compact.visible{display:inline-flex}.source-master-hidden{display:none!important}
+      @media(max-width:900px){.work-grid,.record-meta{grid-template-columns:1fr}.registry-head{display:none}.registry-row{grid-template-columns:1fr;gap:4px;padding:13px}.registry-row>span:last-child{justify-self:start}.modal-head{padding:11px 14px!important}.modal-body{padding:8px 14px 18px!important}.quick-preview{display:none}.registry-tools{align-items:flex-start}}
+    `;
+    document.head.appendChild(style);
+
+    const nav = document.querySelector('.nav');
+    const businessButton = nav?.querySelector('[data-view="business"]');
+    let masterButton = nav?.querySelector('[data-view="masters"]');
+    if (nav && businessButton && !masterButton) { masterButton=document.createElement('button'); masterButton.className='btn'; masterButton.dataset.view='masters'; masterButton.textContent='Master Records'; nav.insertBefore(masterButton,businessButton); }
+    const businessSection = $('business'); if (!businessSection) return;
+    let masterSection = $('masters'); if (!masterSection) { masterSection=document.createElement('section'); masterSection.className='section'; masterSection.id='masters'; businessSection.parentNode.insertBefore(masterSection,businessSection); }
+
+    const searchBox=$('searchBox'), entityFilter=$('statusFilter'), sourceFilter=$('sourceFilter'), searchPanel=$('searchPanel'), manualTop=$('manualTop');
+    const entityLabel=entityFilter?.closest('.field')?.querySelector('label'), sourceField=sourceFilter?.closest('.field');
+    const originalEntityHTML=entityFilter?.innerHTML||'', originalEntityLabel=entityLabel?.textContent||'Status', originalSearchPlaceholder=searchBox?.placeholder||'';
+    let masterMode=false, businessFilter='all', masterPage=1, pageSize=25;
+
+    function enterMasterMode(){
+      masterMode=true; if(manualTop)manualTop.style.display='none'; if(searchPanel)searchPanel.style.display='block';
+      if(searchBox)searchBox.placeholder='Name, MR number, address, email, phone...';
+      if(entityLabel)entityLabel.textContent='Entity Type';
+      if(entityFilter){ entityFilter.innerHTML='<option value="all">All Entity Types</option>'+entityTypes.map(t=>`<option value="${t.toLowerCase()}">${t}</option>`).join(''); entityFilter.value='all'; }
+      sourceField?.classList.add('source-master-hidden');
+      const clear=$('clearFilters'); if(clear){ clear.classList.add('clear-compact'); clear.textContent='Clear'; }
+      const eyebrow=searchPanel?.querySelector('.eyebrow'); if(eyebrow)eyebrow.textContent='Search Master Records';
+    }
+    function leaveMasterMode(){
+      if(!masterMode)return; masterMode=false; if(manualTop)manualTop.style.removeProperty('display'); if(searchBox)searchBox.placeholder=originalSearchPlaceholder;
+      if(entityLabel)entityLabel.textContent=originalEntityLabel; if(entityFilter){entityFilter.innerHTML=originalEntityHTML;entityFilter.value='all';}
+      sourceField?.classList.remove('source-master-hidden'); const clear=$('clearFilters'); if(clear)clear.classList.remove('clear-compact','visible');
+      const eyebrow=searchPanel?.querySelector('.eyebrow'); if(eyebrow)eyebrow.textContent='Search & Sort';
+    }
+    function showSection(id,title,intro){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); document.querySelectorAll('.nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id)); if($('pageTitle'))$('pageTitle').textContent=title; if($('pageIntro'))$('pageIntro').t
