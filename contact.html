@@ -27,13 +27,13 @@
 
     <section class="feature-panel page-section">
       <div><p class="eyebrow">Email</p><h2>info@heartlandpridecenter.org</h2></div>
-      <div><p>Email is still available, but this form now routes public inquiries directly into the Atlas HQ department inboxes.</p><div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div></div>
+      <div><p>This form sends a notification to the HPC email inbox and saves a trackable copy in Atlas HQ.</p><div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div></div>
     </section>
 
     <section class="intake-form" aria-label="Contact form">
       <p class="eyebrow">Contact form</p>
       <h2>Tell us what you need or how you want to connect.</h2>
-      <p class="form-note">This form feeds directly into Atlas HQ so inquiries can be routed, tracked, and addressed.</p>
+      <p class="form-note">Your message is emailed to HPC and recorded in Atlas HQ so it can be routed, tracked, and addressed.</p>
       <form class="form-grid" id="contactIntakeForm">
         <div class="form-field"><label for="contactName">Name *</label><input id="contactName" autocomplete="name" required></div>
         <div class="form-field"><label for="contactEmail">Email *</label><input id="contactEmail" type="email" autocomplete="email" required></div>
@@ -43,7 +43,7 @@
         <div class="form-field"><label for="contactFollowup">Preferred follow-up</label><select id="contactFollowup"><option>Email</option><option>Phone</option></select></div>
         <div class="form-field full"><label for="contactMessage">Message *</label><textarea id="contactMessage" required placeholder="Tell us what you need, what you are offering, or how you would like to connect."></textarea></div>
         <button class="btn primary" type="submit">Send to HPC</button>
-        <p class="privacy-line" id="contactMessageStatus">Please avoid sharing highly sensitive details through this general web form.</p>
+        <p class="privacy-line" id="contactMessageStatus" aria-live="polite">Please avoid sharing highly sensitive details through this general web form.</p>
       </form>
     </section>
 
@@ -66,23 +66,83 @@
     const apiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
     const apiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
     const ready = Boolean(apiBase && apiKey && !apiKey.includes('ADD_PUBLIC_TOKEN'));
+    const notificationEndpoint = 'https://formsubmit.co/ajax/info@heartlandpridecenter.org';
     const headers = (extra={}) => Object.assign({apikey: apiKey, Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'}, extra);
     const label = {contact:'General Contact', resources:'Resource Request', partners:'Partnership Inquiry', volunteers:'Volunteer Interest', events:'Event Request', business:'Business / Directory Inquiry'};
+
+    async function sendEmailNotification(fields) {
+      const body = new FormData();
+      Object.entries(fields).forEach(([key, value]) => body.append(key, value || ''));
+      body.append('_subject', `[HPC Contact Form] ${fields.department}`);
+      body.append('_template', 'table');
+      body.append('_captcha', 'false');
+
+      let lastError;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const response = await fetch(notificationEndpoint, {
+            method: 'POST',
+            headers: {Accept: 'application/json'},
+            body
+          });
+          if (!response.ok) throw new Error(`notification failed (${response.status})`);
+          const result = await response.json().catch(() => ({}));
+          if (result.success === false) throw new Error(result.message || 'notification rejected');
+          return;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error('notification failed');
+    }
+
     contactIntakeForm.addEventListener('submit', async e => {
       e.preventDefault();
+      const submitButton = contactIntakeForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
       contactMessageStatus.innerHTML = '<strong>Submitting...</strong>';
-      if (!ready) { contactMessageStatus.innerHTML = '<strong>Connection issue.</strong> Please email info@heartlandpridecenter.org.'; return; }
+      if (!ready) {
+        contactMessageStatus.innerHTML = '<strong>Connection issue.</strong> Please email info@heartlandpridecenter.org.';
+        submitButton.disabled = false;
+        return;
+      }
+
       const type = contactDepartment.value;
-      const notes = [`Preferred follow-up: ${contactFollowup.value}`, `Routed department: ${label[type]}`, `Message: ${contactMessage.value.trim()}`].join('\n');
-      const payload = {type, status:'new', organization_name:contactName.value.trim(), contact_name:contactName.value.trim(), email:contactEmail.value.trim(), phone:contactPhone.value.trim(), category:label[type], city:contactCity.value.trim(), county:'Polk', description:contactMessage.value.trim(), notes};
+      const department = label[type];
+      const name = contactName.value.trim();
+      const email = contactEmail.value.trim();
+      const phone = contactPhone.value.trim();
+      const city = contactCity.value.trim();
+      const followup = contactFollowup.value;
+      const message = contactMessage.value.trim();
+      const notes = [`Preferred follow-up: ${followup}`, `Routed department: ${department}`, `Message: ${message}`].join('\n');
+      const payload = {type, status:'new', organization_name:name, contact_name:name, email, phone, category:department, city, county:'Polk', description:message, notes};
+
       try {
-        const res = await fetch(apiBase + '/applications', {method:'POST', headers:headers({Prefer:'return=minimal'}), body:JSON.stringify(payload)});
-        if (!res.ok) throw new Error('insert failed');
+        const databaseResponse = await fetch(apiBase + '/applications', {
+          method:'POST',
+          headers:headers({Prefer:'return=minimal'}),
+          body:JSON.stringify(payload)
+        });
+        if (!databaseResponse.ok) throw new Error(`database insert failed (${databaseResponse.status})`);
+
+        await sendEmailNotification({
+          name,
+          email,
+          phone,
+          city,
+          department,
+          'preferred follow-up': followup,
+          message
+        });
+
         contactIntakeForm.reset();
-        contactMessageStatus.innerHTML = '<strong>❤️ Message received.</strong> Your inquiry has been routed to the correct HPC inbox.';
+        contactMessageStatus.innerHTML = '<strong>❤️ Message received.</strong> It was emailed to HPC and recorded in Atlas HQ.';
       } catch (err) {
         console.error(err);
-        contactMessageStatus.innerHTML = '<strong>Submission issue.</strong> Please email info@heartlandpridecenter.org so we do not miss you.';
+        contactMessageStatus.innerHTML = '<strong>We could not confirm complete delivery.</strong> Please email <a href="mailto:info@heartlandpridecenter.org">info@heartlandpridecenter.org</a> so your message is not missed.';
+      } finally {
+        submitButton.disabled = false;
       }
     });
   </script>
