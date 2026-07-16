@@ -48,10 +48,10 @@ jobs:
               --header "apikey: $KEY" \
               --header "Authorization: Bearer $KEY" \
               --header 'Content-Type: application/json' \
-              --header 'Prefer: return=representation' \
+              --header 'Prefer: return=minimal' \
               --data "$PAYLOAD")
             BODY=$(cat "${TYPE}.json" 2>/dev/null || true)
-            if [ "$CODE" = "201" ]; then
+            if [ "$CODE" = "201" ] || [ "$CODE" = "204" ]; then
               RESULT='pass'
               MESSAGE='Submission accepted by production database.'
             else
