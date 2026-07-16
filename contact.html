@@ -1,150 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Contact | Heartland Pride Center</title>
-  <meta name="description" content="Contact Heartland Pride Center for support, partnerships, volunteer interest, and resource directory inquiries." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta name="description" content="Contact Heartland Pride Center for support, partnerships, volunteer interest, and resource inquiries.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="pages.css" />
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="pages.css">
 </head>
 <body>
-  <header class="site-header" id="top">
-    <a class="brand" href="index.html" aria-label="Heartland Pride Center home"><img src="logo.png" alt="Heartland Pride Center logo"><span><strong>Heartland</strong><em>Pride Center</em></span></a>
-    <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
-    <nav class="nav-links" aria-label="Primary navigation"><a href="about.html">About</a><a href="programs.html">Programs</a><a href="resources.html">Resources</a><a href="partners.html">Partners</a><a href="volunteer.html">Get Involved</a><a href="contact.html">Contact</a></nav>
-  </header>
-
-  <main class="page-main">
-    <section class="page-hero">
-      <p class="eyebrow">Contact HPC</p>
-      <h1>Start the conversation here.</h1>
-      <p class="intro">Reach out for support, partnerships, directory interest, volunteer opportunities, outreach ideas, or general questions.</p>
-    </section>
-
-    <section class="feature-panel page-section">
-      <div><p class="eyebrow">Email</p><h2>info@heartlandpridecenter.org</h2></div>
-      <div><p>This form sends a notification to the HPC email inbox and saves a trackable copy in Atlas HQ.</p><div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div></div>
-    </section>
-
-    <section class="intake-form" aria-label="Contact form">
-      <p class="eyebrow">Contact form</p>
-      <h2>Tell us what you need or how you want to connect.</h2>
-      <p class="form-note">Your message is emailed to HPC and recorded in Atlas HQ so it can be routed, tracked, and addressed.</p>
-      <form class="form-grid" id="contactIntakeForm">
-        <div class="form-field"><label for="contactName">Name *</label><input id="contactName" autocomplete="name" required></div>
-        <div class="form-field"><label for="contactEmail">Email *</label><input id="contactEmail" type="email" autocomplete="email" required></div>
-        <div class="form-field"><label for="contactPhone">Phone</label><input id="contactPhone" inputmode="tel" autocomplete="tel"></div>
-        <div class="form-field"><label for="contactCity">City</label><input id="contactCity" autocomplete="address-level2"></div>
-        <div class="form-field"><label for="contactDepartment">What is this about? *</label><select id="contactDepartment" required><option value="contact">General Contact</option><option value="resources">I need help / resources</option><option value="partners">Partnership or collaboration</option><option value="volunteers">Volunteer interest</option><option value="events">Event idea or request</option><option value="business">Business or directory inquiry</option></select></div>
-        <div class="form-field"><label for="contactFollowup">Preferred follow-up</label><select id="contactFollowup"><option>Email</option><option>Phone</option></select></div>
-        <div class="form-field full"><label for="contactMessage">Message *</label><textarea id="contactMessage" required placeholder="Tell us what you need, what you are offering, or how you would like to connect."></textarea></div>
-        <button class="btn primary" type="submit">Send to HPC</button>
-        <p class="privacy-line" id="contactMessageStatus" aria-live="polite">Please avoid sharing highly sensitive details through this general web form.</p>
-      </form>
-    </section>
-
-    <section class="page-section">
-      <p class="eyebrow">What to include</p>
-      <div class="page-grid">
-        <article class="page-card"><span class="tag">Support</span><h3>If you need help</h3><p>Tell us what kind of support or resource you are looking for, your general location, and the safest way to follow up.</p></article>
-        <article class="page-card"><span class="tag">Partners</span><h3>If you want to collaborate</h3><p>Share your organization, what you offer, and how you would like to work with HPC.</p></article>
-        <article class="page-card"><span class="tag">Directory</span><h3>If you want to be listed</h3><p>Include your business or organization name, services, location, website, and why the listing is affirming.</p></article>
-      </div>
-    </section>
-
-    <section class="callout"><p class="eyebrow">Serving</p><h2>Polk County and the surrounding Central Florida Heartland region.</h2><p>HPC is rooted in local connection and regional access. The goal is to make support easier to find, easier to trust, and easier to reach.</p></section>
-  </main>
-
-  <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="programs.html">Programs</a></div></footer>
-  <script src="script.js"></script>
-  <script src="hpc-data-source.js?v=atlas-intake-20260708"></script>
-  <script>
-    const apiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
-    const apiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
-    const ready = Boolean(apiBase && apiKey && !apiKey.includes('ADD_PUBLIC_TOKEN'));
-    const notificationEndpoint = 'https://formsubmit.co/ajax/info@heartlandpridecenter.org';
-    const headers = (extra={}) => Object.assign({apikey: apiKey, Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'}, extra);
-    const label = {contact:'General Contact', resources:'Resource Request', partners:'Partnership Inquiry', volunteers:'Volunteer Interest', events:'Event Request', business:'Business / Directory Inquiry'};
-
-    async function sendEmailNotification(fields) {
-      const body = new FormData();
-      Object.entries(fields).forEach(([key, value]) => body.append(key, value || ''));
-      body.append('_subject', `[HPC Contact Form] ${fields.department}`);
-      body.append('_template', 'table');
-      body.append('_captcha', 'false');
-
-      let lastError;
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        try {
-          const response = await fetch(notificationEndpoint, {
-            method: 'POST',
-            headers: {Accept: 'application/json'},
-            body
-          });
-          if (!response.ok) throw new Error(`notification failed (${response.status})`);
-          const result = await response.json().catch(() => ({}));
-          if (result.success === false) throw new Error(result.message || 'notification rejected');
-          return;
-        } catch (error) {
-          lastError = error;
-        }
-      }
-      throw lastError || new Error('notification failed');
-    }
-
-    contactIntakeForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const submitButton = contactIntakeForm.querySelector('button[type="submit"]');
-      submitButton.disabled = true;
-      contactMessageStatus.innerHTML = '<strong>Submitting...</strong>';
-      if (!ready) {
-        contactMessageStatus.innerHTML = '<strong>Connection issue.</strong> Please email info@heartlandpridecenter.org.';
-        submitButton.disabled = false;
-        return;
-      }
-
-      const type = contactDepartment.value;
-      const department = label[type];
-      const name = contactName.value.trim();
-      const email = contactEmail.value.trim();
-      const phone = contactPhone.value.trim();
-      const city = contactCity.value.trim();
-      const followup = contactFollowup.value;
-      const message = contactMessage.value.trim();
-      const notes = [`Preferred follow-up: ${followup}`, `Routed department: ${department}`, `Message: ${message}`].join('\n');
-      const payload = {type, status:'new', organization_name:name, contact_name:name, email, phone, category:department, city, county:'Polk', description:message, notes};
-
-      try {
-        const databaseResponse = await fetch(apiBase + '/applications', {
-          method:'POST',
-          headers:headers({Prefer:'return=minimal'}),
-          body:JSON.stringify(payload)
-        });
-        if (!databaseResponse.ok) throw new Error(`database insert failed (${databaseResponse.status})`);
-
-        await sendEmailNotification({
-          name,
-          email,
-          phone,
-          city,
-          department,
-          'preferred follow-up': followup,
-          message
-        });
-
-        contactIntakeForm.reset();
-        contactMessageStatus.innerHTML = '<strong>❤️ Message received.</strong> It was emailed to HPC and recorded in Atlas HQ.';
-      } catch (err) {
-        console.error(err);
-        contactMessageStatus.innerHTML = '<strong>We could not confirm complete delivery.</strong> Please email <a href="mailto:info@heartlandpridecenter.org">info@heartlandpridecenter.org</a> so your message is not missed.';
-      } finally {
-        submitButton.disabled = false;
-      }
-    });
-  </script>
-</body>
-</html>
+<header class="site-header" id="top"><a class="brand" href="index.html"><img src="logo.png" alt="Heartland Pride Center logo"><span><strong>Heartland</strong><em>Pride Center</em></span></a><button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button><nav class="nav-links" aria-label="Primary navigation"></nav></header>
+<main class="page-main">
+  <section class="page-hero"><p class="eyebrow">Contact HPC</p><h1>Start the conversation here.</h1><p class="intro">Reach out for support, partnerships, volunteer opportunities, outreach ideas, or general questions.</p></section>
+  <section class="feature-panel page-section"><div><p class="eyebrow">Email</p><h2>info@heartlandpridecenter.org</h2></div><div><p>Use the form below or email HPC directly.</p><div class="actions"><a class="btn primary" href="mailto:info@heartlandpridecenter.org">Email HPC</a></div></div></section>
+  <section class="intake-form" aria-label="Contact form"><p class="eyebrow">Contact form</p><h2>Tell us what you need or how you want to connect.</h2><p class="form-note">Your inquiry is saved in Atlas HQ and emailed to HPC through one verified intake pipeline.</p>
+    <form class="form-grid" id="contactIntakeForm">
+      <div class="form-field"><label for="contactName">Name *</label><input id="contactName" autocomplete="name" required></div>
+      <div class="form-field"><label for="contactEmail">Email *</label><input id="contactEmail" type="email" autocomplete="email" required></div>
+      <div class="form-field"><label for="contactPhone">Phone</label><input id="contactPhone" inputmode="tel" autocomplete="tel"></div>
+      <div class="form-field"><label for="contactCity">City</label><input id="contactCity" autocomplete="address-level2"></div>
+      <div class="form-field"><label for="contactDepartment">What is this about? *</label><select id="contactDepartment" required><option value="contact">General Contact</option><option value="resources">I need help / resources</option><option value="partners">Partnership or collaboration</option><option value="volunteers">Volunteer interest</option><option value="events">Event idea or request</option><option value="business">Business or directory inquiry</option></select></div>
+      <div class="form-field"><label for="contactFollowup">Preferred follow-up</label><select id="contactFollowup"><option>Email</option><option>Phone</option></select></div>
+      <div class="form-field full"><label for="contactMessage">Message *</label><textarea id="contactMessage" required></textarea></div>
+      <button class="btn primary" type="submit">Send to HPC</button><p class="privacy-line" id="contactMessageStatus">Please avoid sharing highly sensitive details through this general form.</p>
+    </form>
+  </section>
+</main>
+<footer><p>© 2026 Heartland Pride Center, Inc.</p></footer>
+<script src="script.js"></script><script src="hpc-data-source.js?v=unified-intake-20260716"></script><script src="hpc-intake.js?v=unified-intake-20260716"></script>
+</body></html>
