@@ -1,4 +1,11 @@
 (() => {
+  if (!document.querySelector('script[src*="hpc-intake.js"]')) {
+    const intake = document.createElement('script');
+    intake.src = 'hpc-intake.js?v=unified-intake-20260716';
+    intake.defer = true;
+    document.head.appendChild(intake);
+  }
+
   function setupApplicationModal() {
     const section = document.getElementById('join-network');
     const form = document.getElementById('landOfHeartsForm');
