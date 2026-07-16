@@ -1,0 +1,117 @@
+name: Live Intake Commissioning
+
+on:
+  push:
+    paths:
+      - '.github/workflows/live-intake-commissioning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  commission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wait for GitHub Pages deployment
+        run: sleep 60
+      - name: Install browser
+        run: |
+          npm install playwright@1.54.1
+          npx playwright install --with-deps chromium
+      - name: Submit every live public form
+        run: |
+          cat > /tmp/commission.cjs <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const root = 'https://heartlandpridecenter.org';
+          const results = { stamp, started_at: new Date().toISOString(), forms: {} };
+
+          async function run(name, path, fill, submit, status) {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+            const entry = { url: root + path, started_at: new Date().toISOString() };
+            try {
+              await page.goto(entry.url, { waitUntil: 'networkidle', timeout: 60000 });
+              await fill(page);
+              await submit(page);
+              await page.waitForFunction(sel => {
+                const el = document.querySelector(sel);
+                return el && /received|incomplete|issue|connection/i.test(el.textContent || '');
+              }, status, { timeout: 45000 });
+              entry.status_text = (await page.locator(status).innerText()).trim();
+              entry.page_url_after = page.url();
+              entry.stayed_on_hpc = page.url().startsWith(root);
+              entry.success = /received/i.test(entry.status_text) && entry.stayed_on_hpc;
+            } catch (error) {
+              entry.success = false;
+              entry.error = String(error && error.message || error);
+              entry.page_url_after = page.url();
+            } finally {
+              entry.finished_at = new Date().toISOString();
+              results.forms[name] = entry;
+              await browser.close();
+            }
+          }
+
+          (async () => {
+            await run('contact', '/contact.html', async p => {
+              await p.fill('#contactName', `HPC LIVE CONTACT TEST ${stamp}`);
+              await p.fill('#contactEmail', 'info@heartlandpridecenter.org');
+              await p.fill('#contactCity', 'Lake Wales');
+              await p.selectOption('#contactDepartment', 'contact');
+              await p.fill('#contactMessage', `Automated live commissioning test ${stamp}`);
+            }, p => p.click('#contactIntakeForm button[type="submit"]'), '#contactMessageStatus');
+
+            await run('volunteer', '/volunteer.html', async p => {
+              await p.fill('#volName', `HPC LIVE VOLUNTEER TEST ${stamp}`);
+              await p.fill('#volEmail', 'info@heartlandpridecenter.org');
+              await p.fill('#volCity', 'Lake Wales');
+              await p.fill('#volInterests', `Automated live commissioning test ${stamp}`);
+            }, p => p.click('#volunteerInterestForm button[type="submit"]'), '#volunteerMessage');
+
+            await run('partner', '/partners.html', async p => {
+              await p.fill('#partnerOrg', `HPC LIVE PARTNER TEST ${stamp}`);
+              await p.fill('#partnerName', 'HPC Automated Test');
+              await p.fill('#partnerEmail', 'info@heartlandpridecenter.org');
+              await p.fill('#partnerCity', 'Lake Wales');
+              await p.selectOption('#partnerType', { label: 'Other Collaboration' });
+              await p.fill('#partnerMessage', `Automated live commissioning test ${stamp}`);
+            }, p => p.click('#partnerInterestForm button[type="submit"]'), '#partnerStatus');
+
+            await run('business', '/business-network.html', async p => {
+              await p.click('a[href="#join-network"]');
+              await p.fill('#lohBusinessName', `HPC LIVE BUSINESS TEST ${stamp}`);
+              await p.selectOption('#lohCategory', { label: 'Nonprofit' });
+              await p.fill('#lohAddress', '1 Test Way');
+              await p.fill('#lohCity', 'Lake Wales');
+              await p.fill('#lohContactName', 'HPC Automated Test');
+              await p.fill('#lohEmail', 'info@heartlandpridecenter.org');
+              await p.fill('#lohPhone', '8635550100');
+              await p.fill('#lohPublicDescription', `Automated live commissioning test ${stamp}`);
+              const consent = p.locator('input[type="checkbox"][required]').last();
+              if (await consent.count()) await consent.check();
+            }, p => p.click('#landOfHeartsForm button[type="submit"]'), '#applicationMessage');
+
+            results.finished_at = new Date().toISOString();
+            results.overall = Object.values(results.forms).every(x => x.success) ? 'pass' : 'fail';
+            fs.mkdirSync('health', { recursive: true });
+            fs.writeFileSync('health/live-intake-commissioning.json', JSON.stringify(results, null, 2));
+            console.log(JSON.stringify(results, null, 2));
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+          node /tmp/commission.cjs
+      - name: Publish commissioning evidence
+        if: always()
+        run: |
+          git config user.name 'HPC Commissioning Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add health/live-intake-commissioning.json
+          git commit -m 'Publish live intake commissioning results' || exit 0
+          git push
