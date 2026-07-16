@@ -57,8 +57,18 @@
     <section class="intake-form" aria-label="Partner interest form">
       <p class="eyebrow">Partner interest</p>
       <h2>Tell us how you want to build with HPC.</h2>
-      <p class="form-note">Use this secure Google Form for collaboration, sponsorship, resource referral, outreach, workshop, or mentorship interest.</p>
-      <div class="form-actions"><a class="btn primary" href="https://docs.google.com/forms/d/e/1FAIpQLSfvPDNWLmOxEiDPfGrnn-9QcmpNURRSbZXLlgxFFm37_E6yWw/viewform?usp=publish-editor" target="_blank" rel="noopener">Open Partner Form</a><p class="privacy-line">Responses are collected in HPC's partnership interest spreadsheet.</p></div>
+      <p class="form-note">This form stays on the HPC website and routes your inquiry into Atlas HQ for review and follow-up.</p>
+      <form class="form-grid" id="partnerInterestForm">
+        <div class="form-field"><label for="partnerOrg">Organization or Business *</label><input id="partnerOrg" autocomplete="organization" required></div>
+        <div class="form-field"><label for="partnerName">Primary Contact *</label><input id="partnerName" autocomplete="name" required></div>
+        <div class="form-field"><label for="partnerEmail">Email *</label><input id="partnerEmail" type="email" autocomplete="email" required></div>
+        <div class="form-field"><label for="partnerPhone">Phone</label><input id="partnerPhone" inputmode="tel" autocomplete="tel"></div>
+        <div class="form-field"><label for="partnerCity">City</label><input id="partnerCity" autocomplete="address-level2"></div>
+        <div class="form-field"><label for="partnerType">Partnership Interest *</label><select id="partnerType" required><option value="">Choose one</option><option>Health or Prevention Partner</option><option>Community Organization or Agency</option><option>Business Sponsor</option><option>Resource or Referral Partner</option><option>Workshop or Training Partner</option><option>Event or Outreach Partner</option><option>Mentor or Advisor</option><option>Other Collaboration</option></select></div>
+        <div class="form-field full"><label for="partnerMessage">How would you like to work with HPC? *</label><textarea id="partnerMessage" required></textarea></div>
+        <button class="btn primary" type="submit">Submit Partner Interest</button>
+        <p class="privacy-line" id="partnerStatus">Your information is not published. All partnerships are reviewed before approval.</p>
+      </form>
     </section>
 
     <section class="callout">
@@ -70,5 +80,60 @@
 
   <footer><p>© 2026 Heartland Pride Center, Inc.</p><div class="footer-nav"><a href="index.html">Home</a><a href="contact.html">Contact</a></div></footer>
   <script src="script.js"></script>
+  <script src="hpc-data-source.js?v=atlas-intake-20260708"></script>
+  <script>
+    const apiBase = window.HPC_DATA_URL ? window.HPC_DATA_URL + '/rest/v1' : '';
+    const apiKey = window.HPC_DATA_PUBLIC_TOKEN || '';
+    const ready = Boolean(apiBase && apiKey && !apiKey.includes('ADD_PUBLIC_TOKEN'));
+    const notificationEndpoint = 'https://formsubmit.co/ajax/info@heartlandpridecenter.org';
+    const headers = (extra={}) => Object.assign({apikey: apiKey, Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json'}, extra);
+
+    async function notifyPartner(fields) {
+      const body = new FormData();
+      Object.entries(fields).forEach(([key, value]) => body.append(key, value || ''));
+      body.append('_subject', `[HPC Partner Interest] ${fields.organization}`);
+      body.append('_template', 'table');
+      body.append('_captcha', 'false');
+      const response = await fetch(notificationEndpoint, {method:'POST', headers:{Accept:'application/json'}, body});
+      if (!response.ok) throw new Error(`notification failed (${response.status})`);
+      const result = await response.json().catch(() => ({}));
+      if (result.success === false) throw new Error(result.message || 'notification rejected');
+    }
+
+    partnerInterestForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const submitButton = partnerInterestForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      partnerStatus.innerHTML = '<strong>Submitting...</strong>';
+      if (!ready) {
+        partnerStatus.innerHTML = '<strong>Connection issue.</strong> Please email info@heartlandpridecenter.org.';
+        submitButton.disabled = false;
+        return;
+      }
+
+      const organization = partnerOrg.value.trim();
+      const contactName = partnerName.value.trim();
+      const email = partnerEmail.value.trim();
+      const phone = partnerPhone.value.trim();
+      const city = partnerCity.value.trim();
+      const partnershipType = partnerType.value;
+      const message = partnerMessage.value.trim();
+      const notes = [`Partnership type: ${partnershipType}`, `Message: ${message}`].join('\n');
+      const payload = {type:'partners', status:'new', organization_name:organization, contact_name:contactName, email, phone, category:partnershipType, city, county:'Polk', description:message, notes};
+
+      try {
+        const databaseResponse = await fetch(apiBase + '/applications', {method:'POST', headers:headers({Prefer:'return=minimal'}), body:JSON.stringify(payload)});
+        if (!databaseResponse.ok) throw new Error(`database insert failed (${databaseResponse.status})`);
+        await notifyPartner({organization, contact_name:contactName, email, phone, city, partnership_type:partnershipType, message});
+        partnerInterestForm.reset();
+        partnerStatus.innerHTML = '<strong>❤️ Partner interest received.</strong> Your inquiry has been saved and sent to HPC for follow-up.';
+      } catch (error) {
+        console.error(error);
+        partnerStatus.innerHTML = '<strong>Submission incomplete.</strong> Your information may be saved, but email notification could not be confirmed. Please email info@heartlandpridecenter.org.';
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
