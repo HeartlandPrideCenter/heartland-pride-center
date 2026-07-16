@@ -1,0 +1,88 @@
+(() => {
+  const ready = fn => document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', fn, { once: true }) : fn();
+  ready(() => {
+    if (!window.HPC_DATA_URL || !window.HPC_DATA_PUBLIC_TOKEN || typeof window.businessRecords !== 'function') return;
+
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value ?? '').replace(/[<>"'&]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const token = () => sessionStorage.getItem('hpcAtlasAccessToken') || window.HPC_DATA_PUBLIC_TOKEN;
+    const headers = (prefer = 'return=representation') => ({ apikey: window.HPC_DATA_PUBLIC_TOKEN, Authorization: `Bearer ${token()}`, 'Content-Type':'application/json', Prefer: prefer });
+    const tableFor = source => source === 'applications' ? 'applications' : source === 'business_listings' ? 'business_listings' : String(source).startsWith('businesses') ? 'businesses' : '';
+    const allRows = () => window.businessRecords();
+    const masterRows = () => allRows().filter(r => tableFor(r.source) === 'businesses');
+    const departmentRows = () => allRows().filter(r => tableFor(r.source) !== 'businesses');
+    const entityTypes = ['Organization','Person','Other'];
+    const metaLine = (key, value) => `${key}: ${encodeURIComponent(String(value ?? ''))}`;
+    const parseMeta = row => {
+      const text = String(row?.notes || '');
+      const get = key => { const m = text.match(new RegExp(`${key}:\\s*([^\\n]+)`, 'i')); return m ? decodeURIComponent(m[1]) : ''; };
+      let contacts = [], sharedNotes = [];
+      try { contacts = JSON.parse(get('Master Contacts JSON') || '[]'); } catch (_) {}
+      try { sharedNotes = JSON.parse(get('Master Shared Notes JSON') || '[]'); } catch (_) {}
+      return {
+        type: get('Master Entity Type') || get('Master Record Type') || String(row?.record_type || row?.type || 'Organization'),
+        mrNumber: get('Master Record Number'),
+        mailing: get('Master Mailing Address') || row?.mailing_address || '',
+        state: get('Master State') || row?.state || 'FL',
+        zip: get('Master ZIP') || row?.zip || row?.postal_code || '',
+        contacts,
+        sharedNotes
+      };
+    };
+    const stripMeta = text => String(text || '')
+      .replace(/Master (?:Entity|Record) Type:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Record Number:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Mailing Address:\s*[^\n]+\n?/ig,'')
+      .replace(/Master State:\s*[^\n]+\n?/ig,'')
+      .replace(/Master ZIP:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Contacts JSON:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Shared Notes JSON:\s*[^\n]+\n?/ig,'')
+      .trim();
+    const buildNotes = (row, meta) => {
+      const legacy = stripMeta(row?.notes);
+      return [
+        metaLine('Master Entity Type', meta.type),
+        metaLine('Master Record Number', meta.mrNumber),
+        metaLine('Master Mailing Address', meta.mailing),
+        metaLine('Master State', meta.state),
+        metaLine('Master ZIP', meta.zip),
+        metaLine('Master Contacts JSON', JSON.stringify(meta.contacts || [])),
+        metaLine('Master Shared Notes JSON', JSON.stringify(meta.sharedNotes || [])),
+        legacy
+      ].filter(Boolean).join('\n');
+    };
+    const masterType = row => parseMeta(row).type.replace(/\b\w/g, c => c.toUpperCase());
+    const matchMaster = row => masterRows().find(m => row.master_id && String(m.id) === String(row.master_id)) || masterRows().find(m => row.email && m.email && row.email.toLowerCase() === m.email.toLowerCase()) || masterRows().find(m => row.name && m.name && row.name.trim().toLowerCase() === m.name.trim().toLowerCase()) || null;
+    const usedByFor = row => row ? departmentRows().filter(r => String(matchMaster(r)?.id || '') === String(row.id)) : [];
+    const statusOf = row => {
+      const explicit = String(row?.status || '').toLowerCase();
+      if (explicit === 'archived') return 'archived';
+      return usedByFor(row).length ? 'active' : 'inactive';
+    };
+    const statusLabel = status => status === 'active' ? 'Active' : status === 'archived' ? 'Archived' : 'Inactive';
+    const statusDot = status => `<span class="mr-status ${esc(status)}"><i></i>${esc(statusLabel(status))}</span>`;
+
+    async function request(table, method, id, payload) {
+      const response = await fetch(`${window.HPC_DATA_URL}/rest/v1/${table}${id == null ? '' : `?id=eq.${encodeURIComponent(id)}`}`, {
+        method, headers: headers(method === 'PATCH' ? 'return=minimal' : 'return=representation'), body: payload ? JSON.stringify(payload) : undefined
+      });
+      if (!response.ok) throw new Error((await response.text()) || `${method} failed (${response.status})`);
+      if (method === 'PATCH' || response.status === 204) return null;
+      const data = await response.json();
+      return Array.isArray(data) ? data[0] : data;
+    }
+
+    const pad = n => String(n).padStart(4,'0');
+    const nextMrNumber = () => {
+      const year = new Date().getFullYear();
+      const nums = masterRows().map(r => parseMeta(r).mrNumber).map(v => {
+        const m = String(v || '').match(new RegExp(`^MR-${year}-(\\d+)$`)); return m ? Number(m[1]) : 0;
+      });
+      return `MR-${year}-${pad(Math.max(0,...nums)+1)}`;
+    };
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .registry-shell{display:block}.registry-main{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.045);padding:16px}.registry-tools{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:12px}.registry-tools h2{font-size:1.35rem}.registry-table{border:1px solid var(--line);border-radius:14px;overflow:hidden}.registry-head,.registry-row{display:grid;grid-template-columns:140px minmax(220px,1.5fr) 150px minmax(160px,1fr) 150px;gap:12px;align-items:center;padding:11px 14px}.registry-head{background:rgba(255,255,255,.07);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}.registry-row{width:100%;border:0;border-top:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--cream);text-align:left;cursor:pointer}.registry-row:hover{background:rgba(240,206,115,.08)}.registry-row strong{display:block}.registry-row small{display:block;color:var(--muted);margin-top:2px}.mr-status{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:.83rem}.mr-status i{width:9px;height:9px;border-radius:50%;background:#d04c55;box-shadow:0 0 0 3px rgba(208,76,85,.13)}.mr-status.active i{background:#47d786;box-shadow:0 0 0 3px rgba(71,215,134,.13)}.mr-status.archived i{background:#9aa6b2;box-shadow:0 0 0 3px rgba(154,166,178,.13)}.registry-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:12px;flex-wrap:wrap}.pager{display:flex;gap:6px}.pager .btn{padding:8px 11px}.quick-preview{position:fixed;z-index:1200;width:260px;max-width:calc(100vw - 28px);border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#0a2035;color:var(--cream);box-shadow:0 16px 40px rgba(0,0,0,.35);pointer-events:none;font-size:.86rem}.quick-preview small{display:block;color:var(--muted);margin-top:4px}.workspace-tabs{position:sticky;top:0;z-index:8;display:flex;gap:6px;flex-wrap:wrap;margin:-10px -14px 12px;padding:9px 14px;background:#071827;border-bottom:1px solid var(--line)}.workspace-tabs .btn{padding:8px 13px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.03)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field input[readonly],.work-field textarea[readonly]{opacity:.86;cursor:default}.record-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.025)}.record-meta small{display:block;color:var(--muted);margin-bottom:4px}.contact-card,.note-card,.usage-row{border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0;background:rgba(255,255,255,.025)}.contact-card.primary{border-color:rgba(240,206,115,.55)}.contact-head,.note-head,.usage-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.contact-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.modal-head{padding:13px 18px!important;min-height:auto!important}.modal-head h2{font-size:1.35rem;margin:.2rem 0}.modal-head p{margin:.2rem 0}.modal-head .btn,#closeModal{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;border-radius:50%!important;font-size:0!important}.modal-head .btn::after,#closeModal::after{content:'×';font-size:24px;line-height:1}.modal-body{padding:10px 18px 20px!important}.ops-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}.admin-actions{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}.notes-compose textarea{min-height:90px}.clear-compact{padding:8px 12px!important;display:none}.clear-compact.visible{display:inline-flex}.source-master-hidden{display:none!important}
+      @media(max-width:900px){.work-grid,.record-meta{grid-template-columns:1fr}.registry-head{display:none}.registry-row{grid-template-columns:1fr;gap:4px;padding:13px}.registry-row>span:last-child{justify-self:start}.modal-head{padding:11px 14px!important}.modal-body{padding:8px 14px 18px!important}.quick-preview{display:none}.registry-tools{align-items:flex-start}}
+    `;
