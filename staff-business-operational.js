@@ -8,37 +8,63 @@
     const token = () => sessionStorage.getItem('hpcAtlasAccessToken') || window.HPC_DATA_PUBLIC_TOKEN;
     const headers = (prefer = 'return=representation') => ({ apikey: window.HPC_DATA_PUBLIC_TOKEN, Authorization: `Bearer ${token()}`, 'Content-Type':'application/json', Prefer: prefer });
     const tableFor = source => source === 'applications' ? 'applications' : source === 'business_listings' ? 'business_listings' : String(source).startsWith('businesses') ? 'businesses' : '';
-    const statusOf = value => { const s = String(value || 'active').toLowerCase(); return ['archived','inactive'].includes(s) ? s : 'active'; };
     const allRows = () => window.businessRecords();
     const masterRows = () => allRows().filter(r => tableFor(r.source) === 'businesses');
     const departmentRows = () => allRows().filter(r => tableFor(r.source) !== 'businesses');
-    const masterType = row => {
-      const direct = String(row.record_type || row.type || '').trim();
-      if (direct) return direct.replace(/\b\w/g, c => c.toUpperCase());
-      const match = String(row.notes || '').match(/Master Record Type:\s*([^\n]+)/i);
-      return match ? match[1].trim() : 'Organization';
+    const entityTypes = ['Organization','Person','Other'];
+    const metaLine = (key, value) => `${key}: ${encodeURIComponent(String(value ?? ''))}`;
+    const parseMeta = row => {
+      const text = String(row?.notes || '');
+      const get = key => { const m = text.match(new RegExp(`${key}:\\s*([^\\n]+)`, 'i')); return m ? decodeURIComponent(m[1]) : ''; };
+      let contacts = [], sharedNotes = [];
+      try { contacts = JSON.parse(get('Master Contacts JSON') || '[]'); } catch (_) {}
+      try { sharedNotes = JSON.parse(get('Master Shared Notes JSON') || '[]'); } catch (_) {}
+      return {
+        type: get('Master Entity Type') || get('Master Record Type') || String(row?.record_type || row?.type || 'Organization'),
+        mrNumber: get('Master Record Number'),
+        mailing: get('Master Mailing Address') || row?.mailing_address || '',
+        state: get('Master State') || row?.state || 'FL',
+        zip: get('Master ZIP') || row?.zip || row?.postal_code || '',
+        contacts,
+        sharedNotes
+      };
     };
+    const stripMeta = text => String(text || '')
+      .replace(/Master (?:Entity|Record) Type:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Record Number:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Mailing Address:\s*[^\n]+\n?/ig,'')
+      .replace(/Master State:\s*[^\n]+\n?/ig,'')
+      .replace(/Master ZIP:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Contacts JSON:\s*[^\n]+\n?/ig,'')
+      .replace(/Master Shared Notes JSON:\s*[^\n]+\n?/ig,'')
+      .trim();
+    const buildNotes = (row, meta) => {
+      const legacy = stripMeta(row?.notes);
+      return [
+        metaLine('Master Entity Type', meta.type),
+        metaLine('Master Record Number', meta.mrNumber),
+        metaLine('Master Mailing Address', meta.mailing),
+        metaLine('Master State', meta.state),
+        metaLine('Master ZIP', meta.zip),
+        metaLine('Master Contacts JSON', JSON.stringify(meta.contacts || [])),
+        metaLine('Master Shared Notes JSON', JSON.stringify(meta.sharedNotes || [])),
+        legacy
+      ].filter(Boolean).join('\n');
+    };
+    const masterType = row => parseMeta(row).type.replace(/\b\w/g, c => c.toUpperCase());
     const matchMaster = row => masterRows().find(m => row.master_id && String(m.id) === String(row.master_id)) || masterRows().find(m => row.email && m.email && row.email.toLowerCase() === m.email.toLowerCase()) || masterRows().find(m => row.name && m.name && row.name.trim().toLowerCase() === m.name.trim().toLowerCase()) || null;
-
-    const parseContacts = row => {
-      const match = String(row?.notes || '').match(/Master Contacts JSON:\s*([^\n]+)/i);
-      if (match) {
-        try { return JSON.parse(decodeURIComponent(match[1])); } catch (_) {}
-      }
-      const initial = [];
-      if (row?.contact || row?.contact_name || row?.email || row?.phone) initial.push({ id: crypto.randomUUID(), name: row.contact || row.contact_name || '', title: '', department: '', email: row.email || '', phone: row.phone || '', preferred: 'Email', active: true, primary: true });
-      return initial;
+    const usedByFor = row => row ? departmentRows().filter(r => String(matchMaster(r)?.id || '') === String(row.id)) : [];
+    const statusOf = row => {
+      const explicit = String(row?.status || '').toLowerCase();
+      if (explicit === 'archived') return 'archived';
+      return usedByFor(row).length ? 'active' : 'inactive';
     };
-    const notesWithMetadata = (row, type, contacts) => {
-      let notes = String(row?.notes || '').replace(/Master Record Type:\s*[^\n]+\n?/ig,'').replace(/Master Contacts JSON:\s*[^\n]+\n?/ig,'').trim();
-      return `Master Record Type: ${type}\nMaster Contacts JSON: ${encodeURIComponent(JSON.stringify(contacts))}${notes ? `\n${notes}` : ''}`;
-    };
+    const statusLabel = status => status === 'active' ? 'Active' : status === 'archived' ? 'Archived' : 'Inactive';
+    const statusDot = status => `<span class="mr-status ${esc(status)}"><i></i>${esc(statusLabel(status))}</span>`;
 
     async function request(table, method, id, payload) {
       const response = await fetch(`${window.HPC_DATA_URL}/rest/v1/${table}${id == null ? '' : `?id=eq.${encodeURIComponent(id)}`}`, {
-        method,
-        headers: headers(method === 'PATCH' ? 'return=minimal' : 'return=representation'),
-        body: payload ? JSON.stringify(payload) : undefined
+        method, headers: headers(method === 'PATCH' ? 'return=minimal' : 'return=representation'), body: payload ? JSON.stringify(payload) : undefined
       });
       if (!response.ok) throw new Error((await response.text()) || `${method} failed (${response.status})`);
       if (method === 'PATCH' || response.status === 204) return null;
@@ -46,208 +72,126 @@
       return Array.isArray(data) ? data[0] : data;
     }
 
+    const pad = n => String(n).padStart(4,'0');
+    const nextMrNumber = () => {
+      const year = new Date().getFullYear();
+      const nums = masterRows().map(r => parseMeta(r).mrNumber).map(v => {
+        const m = String(v || '').match(new RegExp(`^MR-${year}-(\\d+)$`)); return m ? Number(m[1]) : 0;
+      });
+      return `MR-${year}-${pad(Math.max(0,...nums)+1)}`;
+    };
+
     const style = document.createElement('style');
     style.textContent = `
-      .registry-shell{display:grid;grid-template-columns:260px 1fr;gap:14px}.registry-filter,.registry-main{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.05);padding:20px}.registry-filter{position:sticky;top:16px;align-self:start}.registry-list{display:grid;gap:8px}.registry-row{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:rgba(255,255,255,.035);color:var(--cream);display:grid;grid-template-columns:1fr auto;gap:14px;cursor:pointer}.registry-row:hover{border-color:rgba(240,206,115,.55)}.registry-row small{display:block;color:var(--muted);margin-top:5px}.registry-tools{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px}.workspace-tabs{position:sticky;top:0;z-index:8;display:flex;gap:8px;flex-wrap:wrap;margin:-16px -16px 18px;padding:16px 20px;background:#071827;border-bottom:1px solid var(--line)}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.work-card{border:1px solid var(--line);border-radius:18px;padding:22px;background:rgba(255,255,255,.035)}.work-field{display:grid;gap:7px;margin:11px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(6,19,35,.72);color:var(--cream);padding:12px}.work-field input[readonly],.work-field textarea[readonly]{opacity:.82;cursor:default}.record-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.record-meta div{border:1px solid var(--line);border-radius:14px;padding:15px;background:rgba(255,255,255,.03)}.record-meta small{display:block;color:var(--muted);margin-bottom:6px}.contact-card{border:1px solid var(--line);border-radius:16px;padding:18px;margin:10px 0;background:rgba(255,255,255,.03)}.contact-card.primary{border-color:rgba(240,206,115,.55)}.contact-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.contact-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.modal-head{padding:22px 24px!important}.modal-head .btn{margin:2px 4px 0 0}.modal-body{padding:16px 24px 26px!important}.ops-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}@media(max-width:900px){.registry-shell,.work-grid,.record-meta{grid-template-columns:1fr}.registry-filter{position:static}.work-card{padding:18px}.modal-head{padding:20px!important}.modal-body{padding:14px 18px 24px!important}}
+      .registry-shell{display:block}.registry-main{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.045);padding:16px}.registry-tools{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:12px}.registry-tools h2{font-size:1.35rem}.registry-table{border:1px solid var(--line);border-radius:14px;overflow:hidden}.registry-head,.registry-row{display:grid;grid-template-columns:140px minmax(220px,1.5fr) 150px minmax(160px,1fr) 150px;gap:12px;align-items:center;padding:11px 14px}.registry-head{background:rgba(255,255,255,.07);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}.registry-row{width:100%;border:0;border-top:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--cream);text-align:left;cursor:pointer}.registry-row:hover{background:rgba(240,206,115,.08)}.registry-row strong{display:block}.registry-row small{display:block;color:var(--muted);margin-top:2px}.mr-status{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:.83rem}.mr-status i{width:9px;height:9px;border-radius:50%;background:#d04c55;box-shadow:0 0 0 3px rgba(208,76,85,.13)}.mr-status.active i{background:#47d786;box-shadow:0 0 0 3px rgba(71,215,134,.13)}.mr-status.archived i{background:#9aa6b2;box-shadow:0 0 0 3px rgba(154,166,178,.13)}.registry-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:12px;flex-wrap:wrap}.pager{display:flex;gap:6px}.pager .btn{padding:8px 11px}.quick-preview{position:fixed;z-index:1200;width:260px;max-width:calc(100vw - 28px);border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#0a2035;color:var(--cream);box-shadow:0 16px 40px rgba(0,0,0,.35);pointer-events:none;font-size:.86rem}.quick-preview small{display:block;color:var(--muted);margin-top:4px}.workspace-tabs{position:sticky;top:0;z-index:8;display:flex;gap:6px;flex-wrap:wrap;margin:-10px -14px 12px;padding:9px 14px;background:#071827;border-bottom:1px solid var(--line)}.workspace-tabs .btn{padding:8px 13px}.workspace-tabs .btn.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#061323;border:0}.workspace-pane{display:none}.workspace-pane.active{display:block}.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.work-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.03)}.work-field{display:grid;gap:6px;margin:9px 0}.work-field input,.work-field textarea,.work-field select{width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(6,19,35,.72);color:var(--cream);padding:11px}.work-field input[readonly],.work-field textarea[readonly]{opacity:.86;cursor:default}.record-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.record-meta div{border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.025)}.record-meta small{display:block;color:var(--muted);margin-bottom:4px}.contact-card,.note-card,.usage-row{border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0;background:rgba(255,255,255,.025)}.contact-card.primary{border-color:rgba(240,206,115,.55)}.contact-head,.note-head,.usage-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.contact-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.modal-head{padding:13px 18px!important;min-height:auto!important}.modal-head h2{font-size:1.35rem;margin:.2rem 0}.modal-head p{margin:.2rem 0}.modal-head .btn,#closeModal{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;border-radius:50%!important;font-size:0!important}.modal-head .btn::after,#closeModal::after{content:'×';font-size:24px;line-height:1}.modal-body{padding:10px 18px 20px!important}.ops-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.danger{border-color:rgba(255,122,130,.45)!important;color:#ffd1d4!important}.admin-actions{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}.notes-compose textarea{min-height:90px}.clear-compact{padding:8px 12px!important;display:none}.clear-compact.visible{display:inline-flex}.source-master-hidden{display:none!important}
+      @media(max-width:900px){.work-grid,.record-meta{grid-template-columns:1fr}.registry-head{display:none}.registry-row{grid-template-columns:1fr;gap:4px;padding:13px}.registry-row>span:last-child{justify-self:start}.modal-head{padding:11px 14px!important}.modal-body{padding:8px 14px 18px!important}.quick-preview{display:none}.registry-tools{align-items:flex-start}}
     `;
     document.head.appendChild(style);
 
     const nav = document.querySelector('.nav');
     const businessButton = nav?.querySelector('[data-view="business"]');
     let masterButton = nav?.querySelector('[data-view="masters"]');
-    if (nav && businessButton && !masterButton) {
-      masterButton = document.createElement('button');
-      masterButton.className = 'btn';
-      masterButton.dataset.view = 'masters';
-      masterButton.textContent = 'Master Records';
-      nav.insertBefore(masterButton, businessButton);
-    }
-    const businessSection = $('business');
-    if (!businessSection) return;
-    let masterSection = $('masters');
-    if (!masterSection) {
-      masterSection = document.createElement('section');
-      masterSection.className = 'section';
-      masterSection.id = 'masters';
-      businessSection.parentNode.insertBefore(masterSection, businessSection);
-    }
+    if (nav && businessButton && !masterButton) { masterButton=document.createElement('button'); masterButton.className='btn'; masterButton.dataset.view='masters'; masterButton.textContent='Master Records'; nav.insertBefore(masterButton,businessButton); }
+    const businessSection = $('business'); if (!businessSection) return;
+    let masterSection = $('masters'); if (!masterSection) { masterSection=document.createElement('section'); masterSection.className='section'; masterSection.id='masters'; businessSection.parentNode.insertBefore(masterSection,businessSection); }
 
-    const searchBox = $('searchBox');
-    const statusFilter = $('statusFilter');
-    const sourceFilter = $('sourceFilter');
-    const searchPanel = $('searchPanel');
-    const manualTop = $('manualTop');
-    const statusLabel = statusFilter?.closest('.field')?.querySelector('label');
-    const originalStatusHTML = statusFilter?.innerHTML || '';
-    const originalStatusLabel = statusLabel?.textContent || 'Status';
-    const originalSearchPlaceholder = searchBox?.placeholder || '';
-    let masterMode = false;
-    let businessFilter = 'all';
+    const searchBox=$('searchBox'), entityFilter=$('statusFilter'), sourceFilter=$('sourceFilter'), searchPanel=$('searchPanel'), manualTop=$('manualTop');
+    const entityLabel=entityFilter?.closest('.field')?.querySelector('label'), sourceField=sourceFilter?.closest('.field');
+    const originalEntityHTML=entityFilter?.innerHTML||'', originalEntityLabel=entityLabel?.textContent||'Status', originalSearchPlaceholder=searchBox?.placeholder||'';
+    let masterMode=false, businessFilter='all', masterPage=1, pageSize=25;
 
-    function enterMasterMode() {
-      masterMode = true;
-      if (manualTop) manualTop.style.display = 'none';
-      if (searchPanel) searchPanel.style.display = 'block';
-      if (searchBox) searchBox.placeholder = 'Name, address, email, phone...';
-      if (statusLabel) statusLabel.textContent = 'Record Type';
-      if (statusFilter) {
-        statusFilter.innerHTML = '<option value="all">All Record Types</option><option value="organization">Organization</option><option value="person">Person</option><option value="partner">Partner</option><option value="event">Event</option><option value="resource">Resource</option><option value="other">Other</option>';
-        statusFilter.value = 'all';
-      }
-      const eyebrow = searchPanel?.querySelector('.eyebrow');
-      if (eyebrow) eyebrow.textContent = 'Search Master Records';
+    function enterMasterMode(){
+      masterMode=true; if(manualTop)manualTop.style.display='none'; if(searchPanel)searchPanel.style.display='block';
+      if(searchBox)searchBox.placeholder='Name, MR number, address, email, phone...';
+      if(entityLabel)entityLabel.textContent='Entity Type';
+      if(entityFilter){ entityFilter.innerHTML='<option value="all">All Entity Types</option>'+entityTypes.map(t=>`<option value="${t.toLowerCase()}">${t}</option>`).join(''); entityFilter.value='all'; }
+      sourceField?.classList.add('source-master-hidden');
+      const clear=$('clearFilters'); if(clear){ clear.classList.add('clear-compact'); clear.textContent='Clear'; }
+      const eyebrow=searchPanel?.querySelector('.eyebrow'); if(eyebrow)eyebrow.textContent='Search Master Records';
     }
-    function leaveMasterMode() {
-      if (!masterMode) return;
-      masterMode = false;
-      if (manualTop) manualTop.style.removeProperty('display');
-      if (searchBox) searchBox.placeholder = originalSearchPlaceholder;
-      if (statusLabel) statusLabel.textContent = originalStatusLabel;
-      if (statusFilter) { statusFilter.innerHTML = originalStatusHTML; statusFilter.value = 'all'; }
-      const eyebrow = searchPanel?.querySelector('.eyebrow');
-      if (eyebrow) eyebrow.textContent = 'Search & Sort';
+    function leaveMasterMode(){
+      if(!masterMode)return; masterMode=false; if(manualTop)manualTop.style.removeProperty('display'); if(searchBox)searchBox.placeholder=originalSearchPlaceholder;
+      if(entityLabel)entityLabel.textContent=originalEntityLabel; if(entityFilter){entityFilter.innerHTML=originalEntityHTML;entityFilter.value='all';}
+      sourceField?.classList.remove('source-master-hidden'); const clear=$('clearFilters'); if(clear)clear.classList.remove('clear-compact','visible');
+      const eyebrow=searchPanel?.querySelector('.eyebrow'); if(eyebrow)eyebrow.textContent='Search & Sort';
     }
-    function showSection(id,title,intro) {
-      document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === id));
-      document.querySelectorAll('.nav [data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === id));
-      if ($('pageTitle')) $('pageTitle').textContent = title;
-      if ($('pageIntro')) $('pageIntro').textContent = intro;
-    }
-    function field(id,label,value='',type='text',readonly=false) {
-      const ro = readonly ? ' readonly' : '';
-      return `<div class="work-field"><label for="${id}">${esc(label)}</label><input id="${id}" type="${type}" value="${esc(value)}"${ro}></div>`;
-    }
+    function showSection(id,title,intro){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); document.querySelectorAll('.nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id)); if($('pageTitle'))$('pageTitle').textContent=title; if($('pageIntro'))$('pageIntro').textContent=intro; }
+    function field(id,label,value='',type='text',readonly=false){return `<div class="work-field"><label for="${id}">${esc(label)}</label><input id="${id}" type="${type}" value="${esc(value)}"${readonly?' readonly':''}></div>`;}
+    function selectField(id,label,options,value,disabled=false){return `<div class="work-field"><label for="${id}">${esc(label)}</label><select id="${id}"${disabled?' disabled':''}>${options.map(o=>`<option value="${esc(o)}"${o===value?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;}
 
-    function renderMasterRegistry() {
-      const rows = masterRows();
-      masterSection.innerHTML = `<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Shared Filing Cabinet</span><p style="color:var(--muted);line-height:1.55">Master records are created and maintained here, then used by every department that opens its own department file.</p></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Registry</span><h2 style="margin:.25rem 0">Master Records</h2><p style="color:var(--muted);margin:0">Shared identity records available to all departments.</p></div><button class="btn primary" id="addMasterRecord">Add Master Record</button></div><div class="registry-list" id="masterRegistryList"></div></div></div>`;
-      const list = $('masterRegistryList');
-      const draw = () => {
-        const q = String(searchBox?.value || '').trim().toLowerCase();
-        const type = String(statusFilter?.value || 'all').toLowerCase();
-        const source = String(sourceFilter?.value || 'all');
-        const filtered = rows.filter(r => (type === 'all' || masterType(r).toLowerCase() === type) && (source === 'all' || String(r.source) === source) && (!q || [r.name,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q)));
-        list.innerHTML = filtered.length ? filtered.map(r => `<button class="registry-row" data-master-id="${esc(r.id)}"><span><strong>${esc(r.name || 'Unnamed master record')}</strong><small>${esc(masterType(r))}</small><small>${esc([r.address,r.city,r.email,r.phone].filter(Boolean).join(' · '))}</small></span><span class="chip">${esc(masterType(r))}</span></button>`).join('') : '<div class="empty">No master records match this search.</div>';
-        list.querySelectorAll('[data-master-id]').forEach(b => b.onclick = () => openMasterWorkspace(b.dataset.masterId));
+    function renderMasterRegistry(){
+      const rows=masterRows();
+      masterSection.innerHTML=`<div class="registry-shell"><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Master Records Database</span><h2 style="margin:.2rem 0">Master Records</h2></div><button class="btn primary" id="addMasterRecord">Add Master Record</button></div><div class="registry-table"><div class="registry-head"><span>Status / MR #</span><span>Name</span><span>Entity Type</span><span>Physical Location</span><span>Last Updated</span></div><div id="masterRegistryList"></div></div><div class="registry-footer"><div id="recordRange"></div><div class="pager"><button class="btn" id="pageHome">Home</button><button class="btn" id="pagePrev">Previous</button><button class="btn" id="pageNext">Next</button><button class="btn" id="pageEnd">End</button></div><label>Rows <select id="pageSize"><option>25</option><option>50</option><option>100</option></select></label></div></div></div>`;
+      $('pageSize').value=String(pageSize);
+      const draw=()=>{
+        const q=String(searchBox?.value||'').trim().toLowerCase(), type=String(entityFilter?.value||'all').toLowerCase();
+        const filtered=rows.filter(r=>{const meta=parseMeta(r);return(type==='all'||meta.type.toLowerCase()===type)&&(!q||[r.name,meta.mrNumber,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q));});
+        const pages=Math.max(1,Math.ceil(filtered.length/pageSize)); masterPage=Math.min(masterPage,pages); const start=(masterPage-1)*pageSize, pageRows=filtered.slice(start,start+pageSize);
+        $('masterRegistryList').innerHTML=pageRows.length?pageRows.map(r=>{const meta=parseMeta(r),status=statusOf(r);return `<button class="registry-row" data-master-id="${esc(r.id)}"><span>${statusDot(status)}<small>${esc(meta.mrNumber||'MR pending')}</small></span><span><strong>${esc(r.name||'Unnamed record')}</strong><small>${esc(r.email||r.phone||'')}</small></span><span>${esc(meta.type)}</span><span>${esc([r.address,r.city].filter(Boolean).join(' · ')||'Not provided')}</span><span>${esc(new Date(r.updated_at||r.created_at||Date.now()).toLocaleDateString())}</span></button>`;}).join(''):'<div class="empty" style="padding:18px">No master records match this search.</div>';
+        $('recordRange').textContent=filtered.length?`Showing ${start+1}-${Math.min(start+pageSize,filtered.length)} of ${filtered.length} records`:'0 records';
+        const clear=$('clearFilters'), has=Boolean(q||type!=='all'); clear?.classList.toggle('visible',has);
+        document.querySelectorAll('[data-master-id]').forEach(b=>{
+          b.onclick=()=>openMasterWorkspace(b.dataset.masterId);
+          let timer,preview; b.onmouseenter=e=>{timer=setTimeout(()=>{const r=rows.find(x=>String(x.id)===String(b.dataset.masterId)),m=parseMeta(r);preview=document.createElement('div');preview.className='quick-preview';preview.innerHTML=`<strong>${esc(r.name||'Unnamed')}</strong><small>${esc(m.mrNumber||'MR pending')} · ${esc(m.type)}</small><small>${esc([r.address,r.city].filter(Boolean).join(', ')||'No location')}</small><small>${esc(r.email||r.phone||'No primary contact')}</small>`;document.body.appendChild(preview);const rect=b.getBoundingClientRect();preview.style.left=`${Math.min(rect.right+10,innerWidth-274)}px`;preview.style.top=`${Math.min(rect.top,innerHeight-preview.offsetHeight-10)}px`;},400);}; b.onmouseleave=()=>{clearTimeout(timer);preview?.remove();};
+        });
+        $('pageHome').disabled=masterPage===1; $('pagePrev').disabled=masterPage===1; $('pageNext').disabled=masterPage===pages; $('pageEnd').disabled=masterPage===pages;
       };
-      searchBox?.addEventListener('input',draw);
-      statusFilter?.addEventListener('change',draw);
-      sourceFilter?.addEventListener('change',draw);
-      $('clearFilters')?.addEventListener('click',() => setTimeout(draw,0));
-      $('addMasterRecord').onclick = () => openMasterWorkspace(null);
-      draw();
+      searchBox?.addEventListener('input',()=>{masterPage=1;draw();}); entityFilter?.addEventListener('change',()=>{masterPage=1;draw();});
+      $('clearFilters')?.addEventListener('click',()=>{if(masterMode){if(searchBox)searchBox.value='';if(entityFilter)entityFilter.value='all';masterPage=1;setTimeout(draw,0);}});
+      $('pageHome').onclick=()=>{masterPage=1;draw();}; $('pagePrev').onclick=()=>{masterPage=Math.max(1,masterPage-1);draw();}; $('pageNext').onclick=()=>{masterPage++;draw();}; $('pageEnd').onclick=()=>{const q=String(searchBox?.value||'').trim().toLowerCase(),type=String(entityFilter?.value||'all').toLowerCase();const count=rows.filter(r=>{const m=parseMeta(r);return(type==='all'||m.type.toLowerCase()===type)&&(!q||[r.name,m.mrNumber,r.email,r.phone,r.address,r.city,r.website].join(' ').toLowerCase().includes(q));}).length;masterPage=Math.max(1,Math.ceil(count/pageSize));draw();};
+      $('pageSize').onchange=e=>{pageSize=Number(e.target.value);masterPage=1;draw();}; $('addMasterRecord').onclick=()=>openMasterWorkspace(null); draw();
     }
 
-    function renderBusinessRegistry() {
-      const rows = departmentRows();
-      businessSection.innerHTML = `<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Business Network</span><div class="field"><label>Search</label><input id="bnSearch" placeholder="Business name, category, city..."></div><div class="filter-stack" id="bnFilters"></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Department Registry</span><h2 style="margin:.25rem 0">Business Network Records</h2><p style="color:var(--muted);margin:0">Business Network owns these records and its public production.</p></div><button class="btn primary" id="addBusinessRecord">Add Business Record</button></div><div class="registry-list" id="bnList"></div></div></div>`;
-      const statuses = ['all','new','in review','waiting','approved','published','active','declined','archived'];
-      $('bnFilters').innerHTML = statuses.map(s => `<button class="btn filter-btn ${businessFilter===s?'primary':''}" data-bn-filter="${s}"><span>${s==='all'?'All Records':s.replace(/\b\w/g,c=>c.toUpperCase())}</span><span>${rows.filter(r=>s==='all'||String(r.status||'new').toLowerCase()===s).length}</span></button>`).join('');
-      $('bnFilters').querySelectorAll('[data-bn-filter]').forEach(b => b.onclick = () => { businessFilter = b.dataset.bnFilter; renderBusinessRegistry(); });
-      const search = $('bnSearch'), list = $('bnList');
-      const draw = () => {
-        const q = search.value.trim().toLowerCase();
-        const filtered = rows.filter(r => (businessFilter === 'all' || String(r.status || 'new').toLowerCase() === businessFilter) && (!q || [r.name,r.category,r.city,r.email,r.phone].join(' ').toLowerCase().includes(q)));
-        list.innerHTML = filtered.length ? filtered.map(r => { const master = matchMaster(r); return `<button class="registry-row" data-source="${esc(r.source)}" data-id="${esc(r.id)}"><span><strong>${esc(r.name || 'Unnamed business')}</strong><small>${esc([r.category,r.city,r.email||r.phone].filter(Boolean).join(' · '))}</small><small>Master: ${esc(master ? master.name : 'Not linked')}</small></span><span class="status">${esc(String(r.status||'new'))}</span></button>`; }).join('') : '<div class="empty">No department records match this view.</div>';
-        list.querySelectorAll('[data-source]').forEach(b => b.onclick = () => openBusinessWorkspace(b.dataset.source,b.dataset.id));
-      };
-      search.addEventListener('input',draw);
-      $('addBusinessRecord').onclick = () => $('manualBtn')?.click();
-      draw();
+    function renderBusinessRegistry(){
+      const rows=departmentRows();
+      businessSection.innerHTML=`<div class="registry-shell"><aside class="registry-filter"><span class="eyebrow">Business Network</span><div class="field"><label>Search</label><input id="bnSearch" placeholder="Business name, category, city..."></div><div class="filter-stack" id="bnFilters"></div></aside><div class="registry-main"><div class="registry-tools"><div><span class="eyebrow">Department Registry</span><h2 style="margin:.25rem 0">Business Network Records</h2><p style="color:var(--muted);margin:0">Business Network owns these records and its public production.</p></div><button class="btn primary" id="addBusinessRecord">Add Business Record</button></div><div class="registry-list" id="bnList"></div></div></div>`;
+      const statuses=['all','new','in review','waiting','approved','published','active','declined','archived'];
+      $('bnFilters').innerHTML=statuses.map(s=>`<button class="btn filter-btn ${businessFilter===s?'primary':''}" data-bn-filter="${s}"><span>${s==='all'?'All Records':s.replace(/\b\w/g,c=>c.toUpperCase())}</span><span>${rows.filter(r=>s==='all'||String(r.status||'new').toLowerCase()===s).length}</span></button>`).join('');
+      $('bnFilters').querySelectorAll('[data-bn-filter]').forEach(b=>b.onclick=()=>{businessFilter=b.dataset.bnFilter;renderBusinessRegistry();}); const search=$('bnSearch'),list=$('bnList');
+      const draw=()=>{const q=search.value.trim().toLowerCase();const filtered=rows.filter(r=>(businessFilter==='all'||String(r.status||'new').toLowerCase()===businessFilter)&&(!q||[r.name,r.category,r.city,r.email,r.phone].join(' ').toLowerCase().includes(q)));list.innerHTML=filtered.length?filtered.map(r=>{const master=matchMaster(r);return `<button class="registry-row" data-source="${esc(r.source)}" data-id="${esc(r.id)}"><span><strong>${esc(r.name||'Unnamed business')}</strong><small>${esc([r.category,r.city,r.email||r.phone].filter(Boolean).join(' · '))}</small><small>Master: ${esc(master?master.name:'Not linked')}</small></span><span class="status">${esc(String(r.status||'new'))}</span></button>`;}).join(''):'<div class="empty">No department records match this view.</div>';list.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>openBusinessWorkspace(b.dataset.source,b.dataset.id));};
+      search.addEventListener('input',draw);$('addBusinessRecord').onclick=()=>$('manualBtn')?.click();draw();
     }
 
-    function activateTab(name) {
-      document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-      document.querySelectorAll('.workspace-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === name));
-    }
+    function activateTab(name){document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.workspace-pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===name));}
+    function duplicateMatches(candidate,excludeId=null){const norm=v=>String(v||'').trim().toLowerCase();return masterRows().filter(r=>String(r.id)!==String(excludeId||'')&&((candidate.name&&norm(r.name)===norm(candidate.name))||(candidate.email&&norm(r.email)===norm(candidate.email))||(candidate.phone&&norm(r.phone)===norm(candidate.phone))||(candidate.website&&norm(r.website)===norm(candidate.website))||(candidate.address&&norm(r.address)===norm(candidate.address))));}
 
-    function openMasterWorkspace(id) {
-      const row = id == null ? null : masterRows().find(r => String(r.id) === String(id));
-      let contacts = parseContacts(row);
-      let editingMain = !row;
-      let dirty = false;
-      const recordType = masterType(row || {});
-      const usedBy = departmentRows().filter(r => matchMaster(r)?.id && String(matchMaster(r).id) === String(row?.id));
-
-      $('modalEyebrow').textContent = 'Master Record';
-      $('modalTitle').textContent = row ? row.name : 'New Master Record';
-      $('modalSub').textContent = row ? `${recordType} · Master Record ${row.id}` : 'Create shared identity record';
-      $('modalBody').innerHTML = `
-        <div class="workspace-tabs"><button class="btn active" data-tab="main">Main</button><button class="btn" data-tab="contacts">Contacts</button><button class="btn" data-tab="administration">Administration</button></div>
-        <section class="workspace-pane active" data-pane="main"><div class="work-grid"><div class="work-card"><span class="eyebrow">Main Information</span><h3>${esc(recordType)} Record</h3>${field('mName','Name',row?.name,'text',!!row)}${field('mWebsite','Website',row?.website,'text',!!row)}${field('mAddress','Physical Address',row?.address,'text',!!row)}${field('mCity','City',row?.city,'text',!!row)}</div><div class="work-card"><span class="eyebrow">Mailing Information</span><h3>Shared Address</h3>${field('mMailing','Mailing Address',row?.mailing_address || row?.address,'text',!!row)}${field('mState','State',row?.state || 'FL','text',!!row)}${field('mZip','ZIP Code',row?.zip || row?.postal_code,'text',!!row)}</div></div><div class="ops-actions"><button class="btn primary" id="editMain">${row?'Edit Information':'Create Master Record'}</button><button class="btn" id="cancelMain" style="display:none">Cancel</button></div></section>
-        <section class="workspace-pane" data-pane="contacts"><div class="work-card"><div class="contact-head"><div><span class="eyebrow">Shared Contacts</span><h3 style="margin:.35rem 0">Points of Contact</h3></div><button class="btn primary" id="addContact">Add Contact</button></div><div id="contactList"></div></div></section>
-        <section class="workspace-pane" data-pane="administration"><div class="work-card"><span class="eyebrow">Administrative Control</span><h3>Record Administration</h3><div class="record-meta"><div><small>Master Record ID</small><strong>${esc(row?.id || 'Assigned when created')}</strong></div><div><small>Record Type</small><strong>${esc(recordType)}</strong></div><div><small>Created</small><strong>${esc(row?.created_at ? new Date(row.created_at).toLocaleString() : 'Not available')}</strong></div><div><small>Last Modified</small><strong>${esc(row?.updated_at ? new Date(row.updated_at).toLocaleString() : 'Not available')}</strong></div><div><small>Created By</small><strong>${esc(row?.created_by || 'Not available')}</strong></div><div><small>Last Modified By</small><strong>${esc(row?.updated_by || 'Not available')}</strong></div></div><div class="work-field"><label>Record State</label><select id="adminState"><option value="active">Active</option><option value="inactive">Inactive</option><option value="archived">Archived</option></select></div><div class="work-card" style="margin-top:14px"><span class="eyebrow">Department Files</span><h3>Where this master record is used</h3>${usedBy.length ? usedBy.map(r => `<div class="contact-card"><strong>${esc(r.source || 'Department File')}</strong><small style="display:block;color:var(--muted);margin-top:5px">Record ${esc(r.id)} · ${esc(r.status || 'active')}</small></div>`).join('') : '<div class="empty">No department files are currently linked to this master record.</div>'}</div><div class="ops-actions"><button class="btn primary" id="saveAdmin">Save Administrative Changes</button>${row?'<button class="btn danger" id="archiveRecord">Archive Record</button>':''}</div></div></section>`;
-      $('modalBackdrop').classList.add('open');
-      $('adminState').value = statusOf(row?.status);
-      document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b => b.onclick = () => activateTab(b.dataset.tab));
-
-      const original = row ? { name:row.name||'', website:row.website||'', address:row.address||'', city:row.city||'', mailing:row.mailing_address||row.address||'', state:row.state||'FL', zip:row.zip||row.postal_code||'' } : null;
-      const setMainReadonly = readonly => ['mName','mWebsite','mAddress','mCity','mMailing','mState','mZip'].forEach(id => { if ($(id)) $(id).readOnly = readonly; });
-      const mainPayload = () => ({ name:$('mName').value.trim(), website:$('mWebsite').value.trim(), address:$('mAddress').value.trim(), city:$('mCity').value.trim(), contact_name:contacts.find(c=>c.primary)?.name || contacts[0]?.name || '', email:contacts.find(c=>c.primary)?.email || contacts[0]?.email || '', phone:contacts.find(c=>c.primary)?.phone || contacts[0]?.phone || '', status:statusOf(row?.status), notes:notesWithMetadata(row,recordType,contacts) });
-
-      $('editMain').onclick = async () => {
-        if (!row) {
-          if (!$('mName').value.trim()) return alert('Name is required.');
-          try { await request('businesses','POST',null,mainPayload()); window.showToast?.('Master record created.'); $('modalBackdrop').classList.remove('open'); $('reloadBtn')?.click(); setTimeout(renderMasterRegistry,650); } catch(e) { alert(`Could not create master record: ${e.message}`); }
-          return;
-        }
-        if (!editingMain) {
-          editingMain = true; dirty = false; setMainReadonly(false); $('editMain').textContent = 'Save Changes'; $('cancelMain').style.display = 'inline-flex'; return;
-        }
-        if (!$('mName').value.trim()) return alert('Name is required.');
-        try { await request('businesses','PATCH',row.id,mainPayload()); window.showToast?.('Main information saved.'); editingMain = false; dirty = false; setMainReadonly(true); $('editMain').textContent = 'Edit Information'; $('cancelMain').style.display = 'none'; $('modalTitle').textContent = $('mName').value.trim(); } catch(e) { alert(`Could not save changes: ${e.message}`); }
-      };
-      $('cancelMain').onclick = () => {
-        Object.entries(original).forEach(([key,value]) => { const map={name:'mName',website:'mWebsite',address:'mAddress',city:'mCity',mailing:'mMailing',state:'mState',zip:'mZip'}; if ($(map[key])) $(map[key]).value=value; });
-        editingMain=false; dirty=false; setMainReadonly(true); $('editMain').textContent='Edit Information'; $('cancelMain').style.display='none';
-      };
-      ['mName','mWebsite','mAddress','mCity','mMailing','mState','mZip'].forEach(id => $(id)?.addEventListener('input',()=>{ if(editingMain) dirty=true; }));
-
-      function renderContacts() {
-        const list = $('contactList');
-        const sorted = [...contacts].sort((a,b) => Number(b.primary)-Number(a.primary));
-        list.innerHTML = sorted.length ? sorted.map(c => `<div class="contact-card ${c.primary?'primary':''}" data-contact-id="${esc(c.id)}"><div class="contact-head"><div><strong>${c.primary?'★ ':''}${esc(c.name || 'Unnamed Contact')}</strong><small style="display:block;color:var(--muted);margin-top:5px">${esc([c.title,c.department].filter(Boolean).join(' · '))}</small></div><span class="chip">${c.active===false?'Inactive':c.primary?'Primary':'Active'}</span></div><p style="margin:.8rem 0 0">${esc([c.email,c.phone,c.preferred?`Prefers ${c.preferred}`:''].filter(Boolean).join(' · '))}</p><div class="contact-actions"><button class="btn small" data-edit-contact="${esc(c.id)}">Edit</button>${!c.primary?`<button class="btn small" data-primary-contact="${esc(c.id)}">Set Primary</button>`:''}<button class="btn small" data-toggle-contact="${esc(c.id)}">${c.active===false?'Mark Active':'Mark Inactive'}</button></div></div>`).join('') : '<div class="empty">No contacts have been added.</div>';
-        list.querySelectorAll('[data-edit-contact]').forEach(b => b.onclick = () => editContact(b.dataset.editContact));
-        list.querySelectorAll('[data-primary-contact]').forEach(b => b.onclick = async () => { contacts = contacts.map(c => ({...c,primary:c.id===b.dataset.primaryContact})); await saveContacts(); });
-        list.querySelectorAll('[data-toggle-contact]').forEach(b => b.onclick = async () => { contacts = contacts.map(c => c.id===b.dataset.toggleContact?{...c,active:c.active===false}:c); await saveContacts(); });
-      }
-      async function saveContacts() {
-        if (!row) { renderContacts(); return; }
-        const primary = contacts.find(c=>c.primary) || contacts[0] || {};
-        try { await request('businesses','PATCH',row.id,{contact_name:primary.name||'',email:primary.email||'',phone:primary.phone||'',notes:notesWithMetadata(row,recordType,contacts)}); window.showToast?.('Contacts saved.'); renderContacts(); } catch(e) { alert(`Could not save contacts: ${e.message}`); }
-      }
-      function editContact(contactId=null) {
-        const contact = contacts.find(c=>c.id===contactId) || {id:crypto.randomUUID(),name:'',title:'',department:'',email:'',phone:'',preferred:'Email',active:true,primary:contacts.length===0};
-        $('modalBody').insertAdjacentHTML('beforeend',`<div class="modal-backdrop open" id="contactEditor" style="position:fixed;z-index:900"><div class="modal" style="width:min(620px,94vw)"><header class="modal-head"><div><span class="eyebrow">Contact</span><h2>${contactId?'Edit Contact':'Add Contact'}</h2></div><button class="btn" id="closeContactEditor">Close</button></header><div class="modal-body"><div class="work-card">${field('cName','Name',contact.name)}${field('cTitle','Job Title',contact.title)}${field('cDepartment','Department / Division',contact.department)}${field('cEmail','Email',contact.email,'email')}${field('cPhone','Phone',contact.phone)}<div class="work-field"><label>Preferred Contact Method</label><select id="cPreferred"><option>Email</option><option>Phone</option><option>Text</option></select></div><div class="ops-actions"><button class="btn primary" id="saveContact">Save Contact</button><button class="btn" id="cancelContact">Cancel</button></div></div></div></div></div>`);
-        $('cPreferred').value=contact.preferred||'Email';
-        const close=()=>$('contactEditor')?.remove(); $('closeContactEditor').onclick=close; $('cancelContact').onclick=close;
-        $('saveContact').onclick=async()=>{const updated={...contact,name:$('cName').value.trim(),title:$('cTitle').value.trim(),department:$('cDepartment').value.trim(),email:$('cEmail').value.trim(),phone:$('cPhone').value.trim(),preferred:$('cPreferred').value};if(!updated.name)return alert('Contact name is required.');contacts=contactId?contacts.map(c=>c.id===contactId?updated:c):[...contacts,updated];close();await saveContacts();};
-      }
-      $('addContact').onclick = () => editContact();
-      renderContacts();
-
-      $('saveAdmin').onclick = async () => { if(!row)return alert('Create the master record first.'); try { await request('businesses','PATCH',row.id,{status:$('adminState').value}); window.showToast?.('Administrative changes saved.'); } catch(e) { alert(`Could not save administration: ${e.message}`); } };
-      $('archiveRecord')?.addEventListener('click',async()=>{if(!confirm('Archive this master record?'))return;try{await request('businesses','PATCH',row.id,{status:'archived'});window.showToast?.('Master record archived.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not archive record: ${e.message}`);}});
-
-      const closeButton = $('closeModal');
-      closeButton.onclick = () => { if(dirty && !confirm('Discard unsaved changes?')) return; $('modalBackdrop').classList.remove('open'); };
-    }
-
-    function openBusinessWorkspace(source,id) {
-      const row = departmentRows().find(r => r.source===source && String(r.id)===String(id));
-      if (!row) return;
-      const master=matchMaster(row),status=String(row.status||'new').toLowerCase();
-      $('modalEyebrow').textContent='Business Network Record'; $('modalTitle').textContent=row.name; $('modalSub').textContent=`${status} · ${source}`;
-      $('modalBody').innerHTML=`<div class="workspace-tabs"><button class="btn active" data-tab="overview">Overview</button><button class="btn" data-tab="application">Application</button><button class="btn" data-tab="internal">Internal</button><button class="btn" data-tab="public">Public Listing</button><button class="btn" data-tab="notes">Notes</button></div><section class="workspace-pane active" data-pane="overview"><div class="record-meta"><div><small>Department Record</small><strong>${esc(row.id)}</strong></div><div><small>Status</small><strong>${esc(status)}</strong></div><div><small>Master Identity</small><strong>${esc(master?.name||'Not linked')}</strong></div></div></section><section class="workspace-pane" data-pane="application"><div class="work-grid"><div class="work-card">${field('bName','Business Name',row.name)}${field('bContact','Contact Person',row.contact)}${field('bEmail','Email',row.email,'email')}${field('bPhone','Phone',row.phone)}${field('bWebsite','Website',row.website)}</div><div class="work-card">${field('bAddress','Address',row.address)}${field('bCity','City',row.city)}${field('bCategory','Category',row.category)}</div></div></section><section class="workspace-pane" data-pane="internal"><div class="work-card">${field('bBadges','Badges',row.badges)}${field('bAssigned','Assigned Staff',row.assigned_to)}</div></section><section class="workspace-pane" data-pane="public"><div class="work-card">${field('bDescription','Public Description',row.description)}<div class="ops-actions"><button class="btn primary" id="publishBusiness">Save & Publish</button><button class="btn" id="hideBusiness">Hide Listing</button></div></div></section><section class="workspace-pane" data-pane="notes"><div class="work-card">${field('bNotes','Notes',row.notes)}<button class="btn primary" id="saveBusiness">Save Record</button></div></section>`;
+    function openMasterWorkspace(id){
+      const row=id==null?null:masterRows().find(r=>String(r.id)===String(id)); let meta=row?parseMeta(row):{type:'Organization',mrNumber:'',mailing:'',state:'FL',zip:'',contacts:[],sharedNotes:[]}; let contacts=[...meta.contacts],sharedNotes=[...meta.sharedNotes],editingMain=!row,dirty=false; const usedBy=usedByFor(row),state=statusOf(row);
+      $('modalEyebrow').textContent=row?'Master Record':'Create Master Record'; $('modalTitle').textContent=row?(row.name||'Master Record'):'New Master Record'; $('modalSub').innerHTML=row?`${esc(meta.type)} · ${esc(meta.mrNumber||'MR pending')} · ${statusDot(state)}`:'Create a record that can be used by every department.';
+      const tabs=row?['main','contacts','notes','administration']:['main','contacts'];
+      $('modalBody').innerHTML=`<div class="workspace-tabs">${tabs.map((t,i)=>`<button class="btn ${i===0?'active':''}" data-tab="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div>
+      <section class="workspace-pane active" data-pane="main"><div class="work-grid"><div class="work-card"><span class="eyebrow">Identity</span>${selectField('mType','Entity Type',entityTypes,meta.type,!!row&&!editingMain)}${field('mName',meta.type==='Person'?'Full Name':'Name',row?.name,'text',!!row)}${field('mWebsite','Website',row?.website,'text',!!row)}</div><div class="work-card"><span class="eyebrow">Physical Location</span>${field('mAddress','Physical Address',row?.address,'text',!!row)}${field('mCity','City',row?.city,'text',!!row)}${field('mState','State',meta.state,'text',!!row)}${field('mZip','ZIP Code',meta.zip,'text',!!row)}</div></div><div class="ops-actions"><button class="btn primary" id="editMain">${row?'Edit':'Create Record'}</button><button class="btn" id="cancelMain" style="display:none">Cancel</button></div></section>
+      <section class="workspace-pane" data-pane="contacts"><div class="work-grid"><div class="work-card"><div class="contact-head"><div><span class="eyebrow">Points of Contact</span><h3 style="margin:.25rem 0">Contacts</h3></div><button class="btn primary" id="addContact">Add Contact</button></div><div id="contactList"></div></div><div class="work-card"><span class="eyebrow">Mailing Information</span>${field('mMailing','Mailing Address',meta.mailing)}${field('mMailCity','Mailing City',row?.mailing_city||row?.city)}${field('mMailState','Mailing State',meta.state)}${field('mMailZip','Mailing ZIP',meta.zip)}${row?'<button class="btn primary" id="saveMailing">Save Mailing Address</button>':''}</div></div></section>
+      ${row?`<section class="workspace-pane" data-pane="notes"><div class="work-card notes-compose"><div class="contact-head"><div><span class="eyebrow">Shared Institutional Notes</span><h3 style="margin:.25rem 0">Notes</h3></div><select id="noteFilter"><option value="all">All Departments</option><option>Administration</option><option>Business Network</option><option>Volunteers</option><option>Partnerships</option><option>Resources</option><option>Events</option></select></div><div class="work-field"><label>Add Note</label><textarea id="newNote" placeholder="Add information that directly pertains to this entity..."></textarea></div><div class="work-grid"><div>${selectField('noteDepartment','Department',['Administration','Business Network','Volunteers','Partnerships','Resources','Events'],'Administration')}</div><div style="align-self:end"><button class="btn primary" id="addNote">Add Note</button></div></div><div id="notesList"></div></div></section>
+      <section class="workspace-pane" data-pane="administration"><div class="work-card"><span class="eyebrow">System Information</span><h3>Record Administration</h3><div class="record-meta"><div><small>Master Record Number</small><strong>${esc(meta.mrNumber||'Not assigned')}</strong></div><div><small>Entity Type</small><strong>${esc(meta.type)}</strong></div><div><small>Created</small><strong>${esc(row.created_at?new Date(row.created_at).toLocaleString():'Not available')}</strong></div><div><small>Last Modified</small><strong>${esc(row.updated_at?new Date(row.updated_at).toLocaleString():'Not available')}</strong></div><div><small>Created By</small><strong>${esc(row.created_by||'System')}</strong></div><div><small>Last Modified By</small><strong>${esc(row.updated_by||'Not available')}</strong></div></div><details style="margin-top:12px"><summary>Technical Information</summary><div class="record-meta" style="margin-top:10px"><div><small>Database UUID</small><strong>${esc(row.id)}</strong></div></div></details><div class="work-card" style="margin-top:12px"><span class="eyebrow">Department Usage</span><h3>Where this record is used</h3><div id="usageList">${usedBy.length?usedBy.map(r=>`<div class="usage-row"><div><strong>${esc(r.source||'Department')}</strong><small style="display:block;color:var(--muted)">${esc(r.status||'active')}</small></div><span>Record ${esc(r.id)}</span></div>`).join(''):'<div class="empty">No department files are currently linked to this record.</div>'}</div></div><div class="admin-actions"><span class="eyebrow">Administrative Actions</span><div class="ops-actions"><button class="btn" id="mergeRecord">Merge Master Record</button><button class="btn danger" id="archiveRecord">${state==='archived'?'Restore Master Record':'Archive Master Record'}</button></div></div></div></section>`:''}`;
       $('modalBackdrop').classList.add('open'); document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.onclick=()=>activateTab(b.dataset.tab));
-      const payload=()=>({name:$('bName').value.trim(),contact_name:$('bContact').value.trim(),email:$('bEmail').value.trim(),phone:$('bPhone').value.trim(),website:$('bWebsite').value.trim(),address:$('bAddress').value.trim(),city:$('bCity').value.trim(),category:$('bCategory').value.trim(),description:$('bDescription').value.trim(),notes:$('bNotes').value.trim()});
-      const save=async extra=>{try{await request(tableFor(row.source),'PATCH',row.id,{...payload(),...extra});window.showToast?.('Business record saved.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderBusinessRegistry,650);}catch(e){alert(`Could not save business record: ${e.message}`);}};
-      $('saveBusiness').onclick=()=>save({}); $('publishBusiness').onclick=()=>save({status:'published'}); $('hideBusiness').onclick=()=>save({status:'hidden'});
+      const setMainReadonly=readonly=>['mName','mWebsite','mAddress','mCity','mState','mZip'].forEach(x=>{if($(x))$(x).readOnly=readonly;}); const original=row?{name:row.name||'',website:row.website||'',address:row.address||'',city:row.city||'',state:meta.state,zip:meta.zip,type:meta.type}:null;
+      const primary=()=>contacts.find(c=>c.primary)||contacts[0]||{}; const mainPayload=()=>({name:$('mName').value.trim(),website:$('mWebsite').value.trim(),address:$('mAddress').value.trim(),city:$('mCity').value.trim(),contact_name:primary().name||'',email:primary().email||'',phone:primary().phone||'',status:row?.status==='archived'?'archived':'active',notes:buildNotes(row,{...meta,type:$('mType').value,mrNumber:meta.mrNumber,mailing:meta.mailing,state:$('mState').value.trim(),zip:$('mZip').value.trim(),contacts,sharedNotes})});
+      $('editMain').onclick=async()=>{
+        if(!row){if(!$('mName').value.trim())return alert('Name is required.');meta.type=$('mType').value;meta.mailing=$('mMailing')?.value.trim()||'';meta.state=$('mState').value.trim();meta.zip=$('mZip').value.trim();const candidate=mainPayload();const dupes=duplicateMatches(candidate);if(dupes.length&&!confirm(`Possible duplicate found: ${dupes.map(d=>d.name).join(', ')}. Create a new record anyway?`))return;meta.mrNumber=nextMrNumber();candidate.notes=buildNotes(null,{...meta,contacts,sharedNotes});try{const created=await request('businesses','POST',null,candidate);window.showToast?.(`Master record ${meta.mrNumber} created.`);$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(()=>{renderMasterRegistry();if(created?.id)openMasterWorkspace(created.id);},700);}catch(e){alert(`Could not create master record: ${e.message}`);}return;}
+        if(!editingMain){editingMain=true;dirty=false;setMainReadonly(false);$('mType').disabled=false;$('editMain').textContent='Save';$('cancelMain').style.display='inline-flex';return;}
+        if(!$('mName').value.trim())return alert('Name is required.');try{meta.type=$('mType').value;await request('businesses','PATCH',row.id,mainPayload());window.showToast?.('Master record saved.');editingMain=false;dirty=false;setMainReadonly(true);$('mType').disabled=true;$('editMain').textContent='Edit';$('cancelMain').style.display='none';$('modalTitle').textContent=$('mName').value.trim();}catch(e){alert(`Could not save changes: ${e.message}`);}
+      };
+      $('cancelMain').onclick=()=>{Object.entries(original).forEach(([k,v])=>{const map={name:'mName',website:'mWebsite',address:'mAddress',city:'mCity',state:'mState',zip:'mZip',type:'mType'};if($(map[k]))$(map[k]).value=v;});editingMain=false;dirty=false;setMainReadonly(true);$('mType').disabled=true;$('editMain').textContent='Edit';$('cancelMain').style.display='none';};
+      ['mName','mWebsite','mAddress','mCity','mState','mZip'].forEach(x=>$(x)?.addEventListener('input',()=>{if(editingMain)dirty=true;}));
+      function renderContacts(){const list=$('contactList');const sorted=[...contacts].sort((a,b)=>Number(b.primary)-Number(a.primary));list.innerHTML=sorted.length?sorted.map(c=>`<div class="contact-card ${c.primary?'primary':''}"><div class="contact-head"><div><strong>${c.primary?'★ ':''}${esc(c.name||'Unnamed Contact')}</strong><small style="display:block;color:var(--muted);margin-top:4px">${esc([c.title,c.department].filter(Boolean).join(' · '))}</small></div><span class="chip">${c.active===false?'Inactive':c.primary?'Primary':'Active'}</span></div><p style="margin:.65rem 0 0">${esc([c.email,c.phone,c.preferred?`Prefers ${c.preferred}`:''].filter(Boolean).join(' · '))}</p><div class="contact-actions"><button class="btn small" data-edit-contact="${esc(c.id)}">Edit</button>${!c.primary?`<button class="btn small" data-primary-contact="${esc(c.id)}">Set Primary</button>`:''}<button class="btn small" data-toggle-contact="${esc(c.id)}">${c.active===false?'Mark Active':'Mark Inactive'}</button></div></div>`).join(''):'<div class="empty">No contacts have been added.</div>';list.querySelectorAll('[data-edit-contact]').forEach(b=>b.onclick=()=>editContact(b.dataset.editContact));list.querySelectorAll('[data-primary-contact]').forEach(b=>b.onclick=async()=>{contacts=contacts.map(c=>({...c,primary:c.id===b.dataset.primaryContact}));await saveContacts();});list.querySelectorAll('[data-toggle-contact]').forEach(b=>b.onclick=async()=>{contacts=contacts.map(c=>c.id===b.dataset.toggleContact?{...c,active:c.active===false}:c);await saveContacts();});}
+      async function saveContacts(){if(!row){renderContacts();return;}const p=primary();try{await request('businesses','PATCH',row.id,{contact_name:p.name||'',email:p.email||'',phone:p.phone||'',notes:buildNotes(row,{...meta,contacts,sharedNotes})});window.showToast?.('Contacts saved.');renderContacts();}catch(e){alert(`Could not save contacts: ${e.message}`);}}
+      function editContact(contactId=null){const c=contacts.find(x=>x.id===contactId)||{id:crypto.randomUUID(),name:'',title:'',department:'',email:'',phone:'',preferred:'Email',active:true,primary:contacts.length===0};$('modalBody').insertAdjacentHTML('beforeend',`<div class="modal-backdrop open" id="contactEditor" style="position:fixed;z-index:900"><div class="modal" style="width:min(620px,94vw)"><header class="modal-head"><div><span class="eyebrow">Contact</span><h2>${contactId?'Edit Contact':'Add Contact'}</h2></div><button class="btn" id="closeContactEditor" aria-label="Close">Close</button></header><div class="modal-body"><div class="work-card">${field('cName','Name',c.name)}${field('cTitle','Job Title',c.title)}${field('cDepartment','Role / Department',c.department)}${field('cEmail','Email',c.email,'email')}${field('cPhone','Phone',c.phone)}<div class="work-field"><label>Preferred Contact Method</label><select id="cPreferred"><option>Email</option><option>Phone</option><option>Text</option></select></div><div class="ops-actions"><button class="btn primary" id="saveContact">Save Contact</button><button class="btn" id="cancelContact">Cancel</button></div></div></div></div></div>`);$('cPreferred').value=c.preferred||'Email';const close=()=>$('contactEditor')?.remove();$('closeContactEditor').onclick=close;$('cancelContact').onclick=close;$('saveContact').onclick=async()=>{const updated={...c,name:$('cName').value.trim(),title:$('cTitle').value.trim(),department:$('cDepartment').value.trim(),email:$('cEmail').value.trim(),phone:$('cPhone').value.trim(),preferred:$('cPreferred').value};if(!updated.name)return alert('Contact name is required.');contacts=contactId?contacts.map(x=>x.id===contactId?updated:x):[...contacts,updated];close();await saveContacts();};}
+      $('addContact').onclick=()=>editContact();renderContacts();
+      $('saveMailing')?.addEventListener('click',async()=>{meta.mailing=$('mMailing').value.trim();meta.state=$('mMailState').value.trim();meta.zip=$('mMailZip').value.trim();try{await request('businesses','PATCH',row.id,{notes:buildNotes(row,{...meta,contacts,sharedNotes})});window.showToast?.('Mailing address saved.');}catch(e){alert(`Could not save mailing address: ${e.message}`);}});
+      function renderNotes(){if(!row)return;const filter=$('noteFilter').value;const visible=[...sharedNotes].filter(n=>filter==='all'||n.department===filter).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));$('notesList').innerHTML=visible.length?visible.map(n=>`<div class="note-card"><div class="note-head"><div><strong>${esc(n.author||'Administrator')} · ${esc(n.department||'Administration')}</strong><small style="display:block;color:var(--muted)">${esc(new Date(n.createdAt).toLocaleString())}${n.editedAt?' · Edited':''}</small></div><span class="chip">${esc(n.department||'Administration')}</span></div><p>${esc(n.text)}</p><div class="contact-actions"><button class="btn small" data-edit-note="${esc(n.id)}">Edit</button><button class="btn small danger" data-delete-note="${esc(n.id)}">Delete</button></div></div>`).join(''):'<div class="empty">No shared notes match this view.</div>';document.querySelectorAll('[data-edit-note]').forEach(b=>b.onclick=async()=>{const n=sharedNotes.find(x=>x.id===b.dataset.editNote);const text=prompt('Edit note',n.text);if(text==null||!text.trim())return;n.text=text.trim();n.editedAt=new Date().toISOString();await saveSharedNotes();});document.querySelectorAll('[data-delete-note]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this note? The deletion remains part of the audit history.'))return;sharedNotes=sharedNotes.filter(x=>x.id!==b.dataset.deleteNote);await saveSharedNotes();});}
+      async function saveSharedNotes(){try{await request('businesses','PATCH',row.id,{notes:buildNotes(row,{...meta,contacts,sharedNotes})});window.showToast?.('Notes saved.');renderNotes();}catch(e){alert(`Could not save notes: ${e.message}`);}}
+      $('noteFilter')?.addEventListener('change',renderNotes);$('addNote')?.addEventListener('click',async()=>{const text=$('newNote').value.trim();if(!text)return alert('Enter a note.');sharedNotes.push({id:crypto.randomUUID(),text,department:$('noteDepartment').value,author:'Gabriel',createdAt:new Date().toISOString()});$('newNote').value='';await saveSharedNotes();});renderNotes();
+      $('archiveRecord')?.addEventListener('click',async()=>{const restore=state==='archived';const message=restore?'Restore this Master Record to normal operations?':'Archive this Master Record? Use archive only for permanent closure or an intentionally ended relationship.';if(!confirm(message))return;try{await request('businesses','PATCH',row.id,{status:restore?'inactive':'archived'});window.showToast?.(restore?'Master record restored.':'Master record archived.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderMasterRegistry,650);}catch(e){alert(`Could not update record: ${e.message}`);}});
+      $('mergeRecord')?.addEventListener('click',()=>{const target=prompt('Enter the MR number of the duplicate record to merge into this record.');if(!target)return;const duplicate=masterRows().find(r=>parseMeta(r).mrNumber.toLowerCase()===target.trim().toLowerCase());if(!duplicate)return alert('No matching Master Record was found.');if(!confirm(`WARNING: Merge ${parseMeta(duplicate).mrNumber} into ${meta.mrNumber}? Contacts, notes, and department history must be reviewed before confirmation.`))return;if(!confirm('Final confirmation: this action cannot be easily reversed. Continue?'))return;alert('Merge review is prepared. The final data transfer requires the database merge procedure and will not run until that procedure is installed.');});
+      const closeButton=$('closeModal');closeButton.setAttribute('aria-label','Close');closeButton.textContent='Close';closeButton.onclick=()=>{if(dirty&&!confirm('Discard unsaved changes?'))return;$('modalBackdrop').classList.remove('open');};
     }
 
-    masterButton?.addEventListener('click',()=>{enterMasterMode();showSection('masters','Master Records','Shared identity records only. Department work remains in department-owned registries.');renderMasterRegistry();});
+    function openBusinessWorkspace(source,id){const row=departmentRows().find(r=>r.source===source&&String(r.id)===String(id));if(!row)return;const master=matchMaster(row),status=String(row.status||'new').toLowerCase();$('modalEyebrow').textContent='Business Network Record';$('modalTitle').textContent=row.name;$('modalSub').textContent=`${status} · ${source}`;$('modalBody').innerHTML=`<div class="workspace-tabs"><button class="btn active" data-tab="overview">Overview</button><button class="btn" data-tab="application">Application</button><button class="btn" data-tab="internal">Internal</button><button class="btn" data-tab="public">Public Listing</button><button class="btn" data-tab="notes">Notes</button></div><section class="workspace-pane active" data-pane="overview"><div class="record-meta"><div><small>Department Record</small><strong>${esc(row.id)}</strong></div><div><small>Status</small><strong>${esc(status)}</strong></div><div><small>Master Identity</small><strong>${esc(master?.name||'Not linked')}</strong></div></div></section><section class="workspace-pane" data-pane="application"><div class="work-grid"><div class="work-card">${field('bName','Business Name',row.name)}${field('bContact','Contact Person',row.contact)}${field('bEmail','Email',row.email,'email')}${field('bPhone','Phone',row.phone)}${field('bWebsite','Website',row.website)}</div><div class="work-card">${field('bAddress','Address',row.address)}${field('bCity','City',row.city)}${field('bCategory','Category',row.category)}</div></div></section><section class="workspace-pane" data-pane="internal"><div class="work-card">${field('bBadges','Badges',row.badges)}${field('bAssigned','Assigned Staff',row.assigned_to)}</div></section><section class="workspace-pane" data-pane="public"><div class="work-card">${field('bDescription','Public Description',row.description)}<div class="ops-actions"><button class="btn primary" id="publishBusiness">Save & Publish</button><button class="btn" id="hideBusiness">Hide Listing</button></div></div></section><section class="workspace-pane" data-pane="notes"><div class="work-card">${field('bNotes','Notes',row.notes)}<button class="btn primary" id="saveBusiness">Save Record</button></div></section>`;$('modalBackdrop').classList.add('open');document.querySelectorAll('.workspace-tabs [data-tab]').forEach(b=>b.onclick=()=>activateTab(b.dataset.tab));const payload=()=>({name:$('bName').value.trim(),contact_name:$('bContact').value.trim(),email:$('bEmail').value.trim(),phone:$('bPhone').value.trim(),website:$('bWebsite').value.trim(),address:$('bAddress').value.trim(),city:$('bCity').value.trim(),category:$('bCategory').value.trim(),description:$('bDescription').value.trim(),notes:$('bNotes').value.trim()});const save=async extra=>{try{await request(tableFor(row.source),'PATCH',row.id,{...payload(),...extra});window.showToast?.('Business record saved.');$('modalBackdrop').classList.remove('open');$('reloadBtn')?.click();setTimeout(renderBusinessRegistry,650);}catch(e){alert(`Could not save business record: ${e.message}`);}};$('saveBusiness').onclick=()=>save({});$('publishBusiness').onclick=()=>save({status:'published'});$('hideBusiness').onclick=()=>save({status:'hidden'});}
+
+    masterButton?.addEventListener('click',()=>{enterMasterMode();showSection('masters','Master Records','The central identity database used by every department.');renderMasterRegistry();});
     document.querySelectorAll('.nav [data-view]:not([data-view="masters"])').forEach(button=>button.addEventListener('click',leaveMasterMode));
     businessButton?.addEventListener('click',()=>setTimeout(renderBusinessRegistry,0));
-    renderMasterRegistry(); renderBusinessRegistry();
+    renderMasterRegistry();renderBusinessRegistry();
   });
 })();
