@@ -1,0 +1,39 @@
+name: Apply Master Records Update
+
+on:
+  push:
+    paths:
+      - '.build/master-records/**'
+      - '.github/workflows/apply-master-records-update.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out website
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assemble and validate clean update
+        shell: bash
+        run: |
+          cat .build/master-records/part-* > staff-business-operational.js
+          node --check staff-business-operational.js
+
+      - name: Commit Master Records update
+        shell: bash
+        run: |
+          git config user.name "HPC Operations Bot"
+          git config user.email "info@heartlandpridecenter.org"
+          git add staff-business-operational.js
+          if git diff --cached --quiet; then
+            echo "Master Records implementation is already current."
+            exit 0
+          fi
+          git commit -m "Complete Master Records database and workspace"
+          git push
