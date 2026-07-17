@@ -132,6 +132,10 @@ if (window.location.pathname.includes('staff')) {
     const intakeDepartmentScript = document.createElement('script');
     intakeDepartmentScript.src = 'staff-intake-department.js?v=intake-foundation-20260716';
     document.body.appendChild(intakeDepartmentScript);
+
+    const intakePresentationScript = document.createElement('script');
+    intakePresentationScript.src = 'staff-intake-presentation.js?v=atlas-standard-20260716';
+    document.body.appendChild(intakePresentationScript);
   }, { once: true });
 }
 
