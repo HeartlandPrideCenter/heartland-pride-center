@@ -131,7 +131,7 @@ if (window.location.pathname.includes('staff')) {
     load('staff-intake-health.js?v=daily-sentinel-20260715');
     load('staff-intake-department.js?v=intake-foundation-20260716');
     load('staff-intake-presentation.js?v=atlas-standard-20260716');
-    load('staff-intake-data-bridge.js?v=live-applications-20260716');
+    load('staff-intake-data-bridge.js?v=legacy-intake-recognition-20260717');
     load('staff-navigation-state.js?v=context-memory-20260716');
   }, { once: true });
 }
