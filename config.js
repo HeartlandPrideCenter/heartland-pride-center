@@ -129,7 +129,7 @@ if (window.location.pathname.includes('staff')) {
 
     load('staff-business-operational.js?v=master-workspace-complete-20260710');
     load('staff-intake-health.js?v=daily-sentinel-20260715');
-    load('staff-intake-department.js?v=intake-foundation-20260716');
+    load('staff-intake-department.js?v=intake-department-complete-20260716');
     load('staff-intake-presentation.js?v=atlas-standard-20260716');
     load('staff-intake-data-bridge.js?v=authoritative-feed-racefix-20260716');
     load('staff-navigation-state.js?v=context-memory-20260716');
