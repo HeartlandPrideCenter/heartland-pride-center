@@ -11,20 +11,15 @@
 
   function canonicalType(row) {
     const haystack = searchableRow(row);
+    const relationshipTerms = /volunteer|partner|partnership|sponsor|collaborat|business|land[ _-]?of[ _-]?hearts|directory|affirming/;
 
-    // Conversations and one-time help requests belong in email/service workflows,
-    // not in the relationship-intake queue.
     if (/contact(?: us)?|general inquiry|resource request|support request|help request|crisis/.test(haystack) &&
-        !/volunteer|partner|partnership|sponsor|collaborat|business|land[ _-]?of[ _-]?hearts|directory|affirming/.test(haystack)) {
-      return '';
-    }
+        !relationshipTerms.test(haystack)) return '';
 
     if (/volunteer|volunteering|get involved|skills offered|availability/.test(haystack)) return 'volunteer';
     if (/partner|partnership|sponsor|collaborat|referral partner|community partner|health partner/.test(haystack)) return 'partner';
     if (/business|land[ _-]?of[ _-]?hearts|directory|affirming(?: business)? network|business network|business application/.test(haystack)) return 'business';
 
-    // Legacy Business Network rows sometimes lack a form label but contain the
-    // characteristic organization/listing fields used by that application.
     if ((row.organization_name || row.business_name || row.website) &&
         (row.category || row.address || row.public_description || row.description)) return 'business';
 
@@ -44,8 +39,35 @@
     };
   }
 
+  function installAuthoritativeFeed(rows) {
+    window.hpcIntakeApplications = rows;
+
+    if (!window.__hpcOriginalBusinessRecords && typeof window.businessRecords === 'function') {
+      window.__hpcOriginalBusinessRecords = window.businessRecords;
+    }
+
+    const baseProvider = window.__hpcOriginalBusinessRecords;
+    if (typeof baseProvider === 'function') {
+      window.businessRecords = () => {
+        const base = Array.isArray(baseProvider()) ? baseProvider() : [];
+        const nonIntake = base.filter(row => row.source !== 'applications');
+        return [...nonIntake, ...window.hpcIntakeApplications];
+      };
+    }
+  }
+
+  function refreshIntakeWhenReady() {
+    const attempts = [0, 150, 400, 900, 1600];
+    attempts.forEach(delay => setTimeout(() => {
+      const button = document.querySelector('.nav [data-view="intake"]');
+      const remembered = localStorage.getItem('hpcAtlasLastDepartment') || sessionStorage.getItem('hpcAtlasLastDepartment') || '';
+      const intakeVisible = button?.classList.contains('active') || document.getElementById('intake')?.classList.contains('active') || remembered === 'intake';
+      if (intakeVisible && button) button.click();
+    }, delay));
+  }
+
   async function loadApplications() {
-    for (let attempt = 0; attempt < 30; attempt += 1) {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
       const accessToken = sessionStorage.getItem('hpcAtlasAccessToken');
       if (accessToken && window.HPC_DATA_URL && window.HPC_DATA_PUBLIC_TOKEN && typeof window.businessRecords === 'function') {
         const response = await fetch(`${window.HPC_DATA_URL}/rest/v1/applications?select=*&order=created_at.asc`, {
@@ -53,38 +75,27 @@
             apikey: window.HPC_DATA_PUBLIC_TOKEN,
             Authorization: `Bearer ${accessToken}`,
             Accept: 'application/json'
-          }
+          },
+          cache: 'no-store'
         });
         if (!response.ok) throw new Error((await response.text()) || `Intake feed failed (${response.status})`);
+
         const allApplications = await response.json();
         const rows = allApplications.map(normalizeApplication).filter(row => row.type);
-
-        const original = window.businessRecords;
-        window.businessRecords = () => {
-          const base = Array.isArray(original()) ? original() : [];
-          const merged = [...base];
-          const keys = new Set(base.map(row => `${row.source || ''}:${row.id}`));
-          rows.forEach(row => {
-            const key = `applications:${row.id}`;
-            if (!keys.has(key)) {
-              merged.push(row);
-              keys.add(key);
-            }
-          });
-          return merged;
-        };
+        installAuthoritativeFeed(rows);
 
         window.dispatchEvent(new CustomEvent('hpc:intake-data-ready', {
           detail: { count: rows.length, totalApplications: allApplications.length }
         }));
-        const intakeButton = document.querySelector('.nav [data-view="intake"]');
-        if (intakeButton?.classList.contains('active')) intakeButton.click();
+        refreshIntakeWhenReady();
         return;
       }
       await sleep(250);
     }
     throw new Error('Atlas login data was not ready for Intake.');
   }
+
+  window.addEventListener('hpc:navigation-restored', refreshIntakeWhenReady);
 
   loadApplications().catch(error => {
     console.error('HPC Intake data bridge:', error);
