@@ -120,19 +120,26 @@ if (window.location.pathname.includes('business-network')) {
 }
 
 if (window.location.pathname.includes('staff')) {
-  window.addEventListener('DOMContentLoaded', () => {
-    const load = (src) => {
+  window.addEventListener('DOMContentLoaded', async () => {
+    const load = src => new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = src;
+      script.async = false;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Could not load ${src}`));
       document.body.appendChild(script);
-    };
+    });
 
-    load('staff-business-operational.js?v=master-workspace-complete-20260710');
-    load('staff-intake-health.js?v=daily-sentinel-20260715');
-    load('staff-intake-department.js?v=intake-department-complete-20260716');
-    load('staff-intake-presentation.js?v=atlas-standard-20260716');
-    load('staff-intake-data-bridge.js?v=authoritative-feed-racefix-20260716');
-    load('staff-navigation-state.js?v=context-memory-20260716');
+    try {
+      await load('staff-business-operational.js?v=master-workspace-complete-20260710');
+      await load('staff-intake-health.js?v=daily-sentinel-20260715');
+      await load('staff-intake-data-bridge.js?v=authoritative-feed-racefix-20260716');
+      await load('staff-intake-department.js?v=intake-department-complete-sequential-20260716');
+      await load('staff-intake-presentation.js?v=atlas-standard-20260716');
+      await load('staff-navigation-state.js?v=context-memory-20260716');
+    } catch (error) {
+      console.error('Atlas staff loader:', error);
+    }
   }, { once: true });
 }
 
