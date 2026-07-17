@@ -2,12 +2,32 @@
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const normalizeText = value => String(value || '').trim().toLowerCase();
 
+  function searchableRow(row) {
+    return Object.entries(row || {})
+      .filter(([, value]) => ['string', 'number', 'boolean'].includes(typeof value))
+      .map(([key, value]) => `${normalizeText(key)} ${normalizeText(value)}`)
+      .join(' ');
+  }
+
   function canonicalType(row) {
-    const haystack = [row.type, row.category, row.department, row.form_type, row.notes, row.description]
-      .map(normalizeText).join(' ');
-    if (/volunteer/.test(haystack)) return 'volunteer';
-    if (/partner|partnership|sponsor|collaborat/.test(haystack)) return 'partner';
-    if (/business|land of hearts|directory|affirming network/.test(haystack)) return 'business';
+    const haystack = searchableRow(row);
+
+    // Conversations and one-time help requests belong in email/service workflows,
+    // not in the relationship-intake queue.
+    if (/contact(?: us)?|general inquiry|resource request|support request|help request|crisis/.test(haystack) &&
+        !/volunteer|partner|partnership|sponsor|collaborat|business|land[ _-]?of[ _-]?hearts|directory|affirming/.test(haystack)) {
+      return '';
+    }
+
+    if (/volunteer|volunteering|get involved|skills offered|availability/.test(haystack)) return 'volunteer';
+    if (/partner|partnership|sponsor|collaborat|referral partner|community partner|health partner/.test(haystack)) return 'partner';
+    if (/business|land[ _-]?of[ _-]?hearts|directory|affirming(?: business)? network|business network|business application/.test(haystack)) return 'business';
+
+    // Legacy Business Network rows sometimes lack a form label but contain the
+    // characteristic organization/listing fields used by that application.
+    if ((row.organization_name || row.business_name || row.website) &&
+        (row.category || row.address || row.public_description || row.description)) return 'business';
+
     return '';
   }
 
@@ -17,9 +37,9 @@
       ...row,
       source: 'applications',
       type,
-      name: row.name || row.organization_name || row.contact_name || 'Unnamed intake',
-      organization_name: row.organization_name || row.name || '',
-      contact_name: row.contact_name || row.name || '',
+      name: row.name || row.organization_name || row.business_name || row.contact_name || 'Unnamed intake',
+      organization_name: row.organization_name || row.business_name || row.name || '',
+      contact_name: row.contact_name || row.primary_contact || row.name || '',
       status: row.status || 'new'
     };
   }
@@ -36,7 +56,8 @@
           }
         });
         if (!response.ok) throw new Error((await response.text()) || `Intake feed failed (${response.status})`);
-        const rows = (await response.json()).map(normalizeApplication).filter(row => row.type);
+        const allApplications = await response.json();
+        const rows = allApplications.map(normalizeApplication).filter(row => row.type);
 
         const original = window.businessRecords;
         window.businessRecords = () => {
@@ -53,7 +74,9 @@
           return merged;
         };
 
-        window.dispatchEvent(new CustomEvent('hpc:intake-data-ready', { detail: { count: rows.length } }));
+        window.dispatchEvent(new CustomEvent('hpc:intake-data-ready', {
+          detail: { count: rows.length, totalApplications: allApplications.length }
+        }));
         const intakeButton = document.querySelector('.nav [data-view="intake"]');
         if (intakeButton?.classList.contains('active')) intakeButton.click();
         return;
