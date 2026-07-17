@@ -121,21 +121,18 @@ if (window.location.pathname.includes('business-network')) {
 
 if (window.location.pathname.includes('staff')) {
   window.addEventListener('DOMContentLoaded', () => {
-    const operationalScript = document.createElement('script');
-    operationalScript.src = 'staff-business-operational.js?v=master-workspace-complete-20260710';
-    document.body.appendChild(operationalScript);
+    const load = (src) => {
+      const script = document.createElement('script');
+      script.src = src;
+      document.body.appendChild(script);
+    };
 
-    const intakeHealthScript = document.createElement('script');
-    intakeHealthScript.src = 'staff-intake-health.js?v=daily-sentinel-20260715';
-    document.body.appendChild(intakeHealthScript);
-
-    const intakeDepartmentScript = document.createElement('script');
-    intakeDepartmentScript.src = 'staff-intake-department.js?v=intake-foundation-20260716';
-    document.body.appendChild(intakeDepartmentScript);
-
-    const intakePresentationScript = document.createElement('script');
-    intakePresentationScript.src = 'staff-intake-presentation.js?v=atlas-standard-20260716';
-    document.body.appendChild(intakePresentationScript);
+    load('staff-business-operational.js?v=master-workspace-complete-20260710');
+    load('staff-intake-health.js?v=daily-sentinel-20260715');
+    load('staff-intake-department.js?v=intake-foundation-20260716');
+    load('staff-intake-presentation.js?v=atlas-standard-20260716');
+    load('staff-intake-data-bridge.js?v=live-applications-20260716');
+    load('staff-navigation-state.js?v=context-memory-20260716');
   }, { once: true });
 }
 
