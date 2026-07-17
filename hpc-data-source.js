@@ -128,6 +128,10 @@ if (window.location.pathname.includes('staff')) {
     const intakeHealthScript = document.createElement('script');
     intakeHealthScript.src = 'staff-intake-health.js?v=daily-sentinel-20260715';
     document.body.appendChild(intakeHealthScript);
+
+    const intakeDepartmentScript = document.createElement('script');
+    intakeDepartmentScript.src = 'staff-intake-department.js?v=intake-foundation-20260716';
+    document.body.appendChild(intakeDepartmentScript);
   }, { once: true });
 }
 
