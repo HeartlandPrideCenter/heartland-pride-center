@@ -112,6 +112,20 @@ if (!window.location.pathname.includes('staff') && !window.__HPC_INTAKE_FALLBACK
   };
 }
 
+// Load the unified intake engine on every public page that connects to Supabase.
+// The engine uses each supported form's ID to save the record and send the
+// corresponding notification email. Its internal guard prevents duplicate loads.
+if (!window.location.pathname.includes('staff')) {
+  const loadUnifiedIntake = () => {
+    if (window.__HPC_UNIFIED_INTAKE__ || document.querySelector('script[data-hpc-unified-intake]')) return;
+    const script = document.createElement('script');
+    script.src = 'hpc-intake.js?v=all-public-intake-email-20260722';
+    script.dataset.hpcUnifiedIntake = 'true';
+    document.head.appendChild(script);
+  };
+  loadUnifiedIntake();
+}
+
 if (window.location.pathname.includes('business-network')) {
   const cardsScript = document.createElement('script');
   cardsScript.src = 'land-of-hearts-cards-view.js?v=show-stage-20260707';
